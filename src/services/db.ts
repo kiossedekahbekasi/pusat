@@ -1,6 +1,7 @@
-import { Product, StoreInfo, SiteSettings, CustomPhoto, AdminUser, OrderDetails, TahfidzProfile, Santri, KegiatanSantri, CustomPage } from '../types';
+import { Product, StoreInfo, SiteSettings, CustomPhoto, AdminUser, OrderDetails, TahfidzProfile, Santri, KegiatanSantri, CustomPage, KiosSedekahProfile } from '../types';
 import { INITIAL_PRODUCTS, STORE_INFO } from '../data/storeData';
 import { DEFAULT_TAHFIDZ_PROFILE, DEFAULT_SANTRI_LIST, DEFAULT_KEGIATAN_LIST } from '../data/tahfidzData';
+import { DEFAULT_KIOS_SEDEKAH_PROFILE } from '../data/kiosSedekahData';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { firestore, auth } from '../lib/firebase';
@@ -16,6 +17,7 @@ const KEYS = {
   SANTRI: 'tsbu_db_santri_v1',
   KEGIATAN: 'tsbu_db_kegiatan_v1',
   CUSTOM_PAGES: 'tsbu_db_custom_pages_v1',
+  KIOS_SEDEKAH: 'tsbu_db_kios_sedekah_v1',
 };
 
 // Helper to sync to Firestore in background
@@ -41,6 +43,7 @@ if (typeof window !== 'undefined') {
       saveToFirestore('santri', JSON.parse(localStorage.getItem(KEYS.SANTRI) || JSON.stringify(DEFAULT_SANTRI_LIST)));
       saveToFirestore('kegiatan', JSON.parse(localStorage.getItem(KEYS.KEGIATAN) || JSON.stringify(DEFAULT_KEGIATAN_LIST)));
       saveToFirestore('customPages', JSON.parse(localStorage.getItem(KEYS.CUSTOM_PAGES) || '[]'));
+      saveToFirestore('kiosSedekah', JSON.parse(localStorage.getItem(KEYS.KIOS_SEDEKAH) || JSON.stringify(DEFAULT_KIOS_SEDEKAH_PROFILE)));
     } catch (e) {
       console.warn('Initial Firestore sync error:', e);
     }
@@ -64,6 +67,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     packagesBadge: 'Hemat',
     cart: 'Keranjang',
     admin: 'Halaman Login / Admin',
+    kiosSedekah: 'Kios Sedekah',
+    kiosSedekahBadge: '',
   },
 };
 
@@ -185,7 +190,7 @@ if (typeof window !== 'undefined') {
 
 // Setup automatic real-time listener from Firestore
 if (typeof window !== 'undefined') {
-  const collectionsToSync = ['products', 'storeInfo', 'settings', 'photos', 'orders', 'tahfidzProfile', 'santri', 'kegiatan', 'customPages'];
+  const collectionsToSync = ['products', 'storeInfo', 'settings', 'photos', 'orders', 'tahfidzProfile', 'santri', 'kegiatan', 'customPages', 'kiosSedekah'];
   collectionsToSync.forEach((key) => {
     try {
       const docRef = doc(firestore, 'store_data', key);
@@ -205,6 +210,7 @@ if (typeof window !== 'undefined') {
                 santri: KEYS.SANTRI,
                 kegiatan: KEYS.KEGIATAN,
                 customPages: KEYS.CUSTOM_PAGES,
+                kiosSedekah: KEYS.KIOS_SEDEKAH,
               };
               const storageKey = localKeyMap[key];
               if (storageKey) {
@@ -587,6 +593,29 @@ export const db = {
     this.saveCustomPages(updated);
   },
 
+  // KIOS SEDEKAH PROFILE
+  getKiosSedekahProfile(): KiosSedekahProfile {
+    try {
+      const data = localStorage.getItem(KEYS.KIOS_SEDEKAH);
+      if (!data) {
+        localStorage.setItem(KEYS.KIOS_SEDEKAH, JSON.stringify(DEFAULT_KIOS_SEDEKAH_PROFILE));
+        saveToFirestore('kiosSedekah', DEFAULT_KIOS_SEDEKAH_PROFILE);
+        return DEFAULT_KIOS_SEDEKAH_PROFILE;
+      }
+      return { ...DEFAULT_KIOS_SEDEKAH_PROFILE, ...JSON.parse(data) };
+    } catch {
+      return DEFAULT_KIOS_SEDEKAH_PROFILE;
+    }
+  },
+
+  saveKiosSedekahProfile(profile: Partial<KiosSedekahProfile>): void {
+    const current = this.getKiosSedekahProfile();
+    const updated = { ...current, ...profile };
+    localStorage.setItem(KEYS.KIOS_SEDEKAH, JSON.stringify(updated));
+    saveToFirestore('kiosSedekah', updated);
+    notifyDBChange();
+  },
+
   // RESET DATABASE
   resetToDefaults(): void {
     localStorage.setItem(KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
@@ -598,6 +627,7 @@ export const db = {
     localStorage.setItem(KEYS.SANTRI, JSON.stringify(DEFAULT_SANTRI_LIST));
     localStorage.setItem(KEYS.KEGIATAN, JSON.stringify(DEFAULT_KEGIATAN_LIST));
     localStorage.setItem(KEYS.CUSTOM_PAGES, JSON.stringify([]));
+    localStorage.setItem(KEYS.KIOS_SEDEKAH, JSON.stringify(DEFAULT_KIOS_SEDEKAH_PROFILE));
     saveToFirestore('products', INITIAL_PRODUCTS);
     saveToFirestore('storeInfo', STORE_INFO);
     saveToFirestore('settings', DEFAULT_SITE_SETTINGS);
@@ -607,6 +637,7 @@ export const db = {
     saveToFirestore('santri', DEFAULT_SANTRI_LIST);
     saveToFirestore('kegiatan', DEFAULT_KEGIATAN_LIST);
     saveToFirestore('customPages', []);
+    saveToFirestore('kiosSedekah', DEFAULT_KIOS_SEDEKAH_PROFILE);
     notifyDBChange();
   },
 

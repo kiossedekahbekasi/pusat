@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, Search, Store, Info, Gift, PhoneCall, SlidersHorizontal, UserCheck, Shield, BookOpen } from 'lucide-react';
+import { ShoppingBag, Search, Store, Info, Gift, PhoneCall, SlidersHorizontal, UserCheck, Shield, BookOpen, HeartHandshake } from 'lucide-react';
 import { StoreInfo, AdminUser, SiteSettings, TahfidzProfile, CustomPage } from '../types';
 
 interface NavbarProps {
@@ -208,6 +208,21 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Info className="w-4 h-4" />
             <span>{siteSettings.navLabels.about}</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('kios_sedekah')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              activeTab === 'kios_sedekah'
+                ? 'bg-emerald-800 text-white shadow-xs font-bold'
+                : 'text-amber-900 bg-amber-50 hover:bg-amber-100 font-semibold border border-amber-200'
+            }`}
+          >
+            <HeartHandshake className="w-4 h-4 text-amber-700" />
+            <span>{siteSettings.navLabels.kiosSedekah}</span>
+            {siteSettings.navLabels.kiosSedekahBadge && (
+              <span className="bg-amber-400 text-emerald-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full uppercase">{siteSettings.navLabels.kiosSedekahBadge}</span>
+            )}
           </button>
 
           <button

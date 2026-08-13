@@ -15,7 +15,9 @@ import {
   Santri,
   KegiatanSantri,
   CustomPage,
-  NavLabels
+  NavLabels,
+  KiosSedekahProfile,
+  KiosSedekahPhoto
 } from '../types';
 import { 
   Lock, 
@@ -57,7 +59,8 @@ import {
   Upload,
   UserPlus,
   Award,
-  User
+  User,
+  HeartHandshake
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -81,7 +84,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [loginError, setLoginError] = useState<string>('');
 
   // Admin Sub-Tab
-  const [adminTab, setAdminTab] = useState<'overview' | 'orders' | 'products' | 'photos' | 'tahfidz_profile' | 'tahfidz_santri' | 'tahfidz_kegiatan' | 'styling' | 'store_info' | 'pages' | 'database'>('overview');
+  const [adminTab, setAdminTab] = useState<'overview' | 'orders' | 'products' | 'photos' | 'tahfidz_profile' | 'tahfidz_santri' | 'tahfidz_kegiatan' | 'kios_sedekah' | 'styling' | 'store_info' | 'pages' | 'database'>('overview');
 
   // Orders State
   const [orders, setOrders] = useState<OrderDetails[]>(() => db.getOrders());
@@ -102,6 +105,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     content: '',
     icon: '📄',
   });
+
+  // Kios Sedekah State
+  const [kiosSedekahProfile, setKiosSedekahProfile] = useState<KiosSedekahProfile>(() => db.getKiosSedekahProfile());
 
   // Editing Santri State
   const [editingSantri, setEditingSantri] = useState<Santri | null>(null);
@@ -146,6 +152,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setSantriList(db.getSantriList());
       setKegiatanList(db.getKegiatanList());
       setCustomPages(db.getCustomPages());
+      setKiosSedekahProfile(db.getKiosSedekahProfile());
     });
     return () => unsubscribe();
   }, []);
@@ -470,6 +477,81 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setIsUploadingTahfidzLogo(false);
       e.target.value = '';
     }
+  };
+
+  // ---------------- KIOS SEDEKAH HANDLERS ----------------
+  const handleSaveKiosSedekahProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    db.saveKiosSedekahProfile(kiosSedekahProfile);
+    showToast('Profil Kios Sedekah berhasil disimpan!');
+  };
+
+  const [isUploadingKiosLogo, setIsUploadingKiosLogo] = useState(false);
+  const handleKiosSedekahLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingKiosLogo(true);
+    try {
+      const compressed = await compressImageFile(file, { maxDimension: 400, maxSizeKB: 60 });
+      setKiosSedekahProfile((prev) => ({ ...prev, logoUrl: compressed }));
+      showToast('Logo Kios Sedekah diunggah! Klik "Simpan Perubahan Profil" untuk menyimpan.');
+    } catch (err: any) {
+      alert(err?.message || 'Gagal memproses foto.');
+    } finally {
+      setIsUploadingKiosLogo(false);
+      e.target.value = '';
+    }
+  };
+
+  const [newKiosProgram, setNewKiosProgram] = useState('');
+  const handleAddKiosProgram = () => {
+    if (!newKiosProgram.trim()) return;
+    setKiosSedekahProfile((prev) => ({ ...prev, programs: [...prev.programs, newKiosProgram.trim()] }));
+    setNewKiosProgram('');
+  };
+  const handleRemoveKiosProgram = (index: number) => {
+    setKiosSedekahProfile((prev) => ({ ...prev, programs: prev.programs.filter((_, i) => i !== index) }));
+  };
+
+  const [newKiosPhotoUrl, setNewKiosPhotoUrl] = useState('');
+  const [newKiosPhotoCaption, setNewKiosPhotoCaption] = useState('');
+  const [isUploadingKiosPhoto, setIsUploadingKiosPhoto] = useState(false);
+  const handleKiosPhotoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingKiosPhoto(true);
+    try {
+      const compressed = await compressImageFile(file, { maxDimension: 700, maxSizeKB: 100 });
+      setNewKiosPhotoUrl(compressed);
+      showToast('Foto diunggah! Isi keterangan lalu klik "Tambah Foto" untuk menyimpan.');
+    } catch (err: any) {
+      alert(err?.message || 'Gagal memproses foto.');
+    } finally {
+      setIsUploadingKiosPhoto(false);
+      e.target.value = '';
+    }
+  };
+  const handleAddKiosPhoto = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newKiosPhotoUrl.trim()) return;
+    const newPhoto: KiosSedekahPhoto = {
+      id: `ksp-${Date.now()}`,
+      url: newKiosPhotoUrl,
+      caption: newKiosPhotoCaption,
+    };
+    const updated = { ...kiosSedekahProfile, photos: [...kiosSedekahProfile.photos, newPhoto] };
+    setKiosSedekahProfile(updated);
+    db.saveKiosSedekahProfile(updated);
+    setNewKiosPhotoUrl('');
+    setNewKiosPhotoCaption('');
+    showToast('Foto dokumentasi Kios Sedekah ditambahkan!');
+  };
+  const handleDeleteKiosPhoto = (id: string) => {
+    if (!confirm('Yakin ingin menghapus foto ini?')) return;
+    const updated = { ...kiosSedekahProfile, photos: kiosSedekahProfile.photos.filter((p) => p.id !== id) };
+    setKiosSedekahProfile(updated);
+    db.saveKiosSedekahProfile(updated);
+    showToast('Foto dokumentasi dihapus.');
   };
 
   // Santri Handlers
@@ -1131,6 +1213,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         >
           <Calendar className="w-4 h-4 text-emerald-600" />
           <span>Kegiatan Santri & Upload Foto ({kegiatanList.length})</span>
+        </button>
+
+        {/* KIOS SEDEKAH TAB */}
+        <button
+          onClick={() => setAdminTab('kios_sedekah')}
+          className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+            adminTab === 'kios_sedekah'
+              ? 'bg-amber-900 text-white shadow-xs'
+              : 'bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200'
+          }`}
+        >
+          <HeartHandshake className="w-4 h-4 text-amber-600" />
+          <span>Kios Sedekah</span>
         </button>
 
         <button
@@ -1815,6 +1910,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     required
                     value={navLabelsInput.about}
                     onChange={(e) => setNavLabelsInput({ ...navLabelsInput, about: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Menu: Kios Sedekah</label>
+                  <input
+                    type="text"
+                    required
+                    value={navLabelsInput.kiosSedekah}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, kiosSedekah: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Lencana Menu Kios Sedekah</label>
+                  <input
+                    type="text"
+                    placeholder="kosongkan untuk sembunyikan"
+                    value={navLabelsInput.kiosSedekahBadge}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, kiosSedekahBadge: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                   />
                 </div>
@@ -2655,6 +2772,271 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------- SUB TAB: KIOS SEDEKAH ---------------- */}
+      {adminTab === 'kios_sedekah' && (
+        <div className="space-y-6 animate-fadeIn">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-6">
+            <div className="border-b border-neutral-100 pb-4">
+              <h3 className="font-bold text-lg text-neutral-900 flex items-center gap-2">
+                <HeartHandshake className="w-5 h-5 text-amber-700" /> Profil Kios Sedekah
+              </h3>
+              <p className="text-xs text-neutral-500 mt-1">
+                Kelola logo, deskripsi, program, kontak, dan foto dokumentasi Kios Sedekah yang tampil di navbar website.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveKiosSedekahProfile} className="space-y-6">
+              {/* Logo Upload */}
+              <div className="p-5 bg-amber-50/70 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-center gap-6">
+                <div className="w-24 h-24 rounded-2xl bg-white p-2 border-2 border-emerald-400 shadow-xs flex items-center justify-center shrink-0 overflow-hidden relative group">
+                  {kiosSedekahProfile.logoUrl ? (
+                    <>
+                      <img src={kiosSedekahProfile.logoUrl} alt="Logo Preview" className="w-full h-full object-cover rounded-xl" />
+                      <button
+                        type="button"
+                        onClick={() => setKiosSedekahProfile({ ...kiosSedekahProfile, logoUrl: '' })}
+                        title="Hapus Foto"
+                        className="absolute -top-2 -right-2 p-1 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md cursor-pointer transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </>
+                  ) : (
+                    <HeartHandshake className="w-10 h-10 text-amber-700" />
+                  )}
+                </div>
+
+                <div className="space-y-2 flex-1 text-center sm:text-left">
+                  <h4 className="font-bold text-sm text-neutral-900">Logo Kios Sedekah</h4>
+                  <p className="text-xs text-neutral-600">Unggah foto/logo dari perangkat Anda (JPG/PNG, Max 2MB) atau masukkan URL gambar.</p>
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1">
+                    <label className="px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-xl text-xs flex items-center gap-2 cursor-pointer shadow-xs transition-colors">
+                      <Upload className="w-4 h-4" />
+                      <span>{isUploadingKiosLogo ? 'Memproses...' : 'Upload Logo Foto Baru'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleKiosSedekahLogoUpload}
+                        disabled={isUploadingKiosLogo}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* General Info Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Nama Kios Sedekah *</label>
+                  <input
+                    type="text"
+                    required
+                    value={kiosSedekahProfile.name}
+                    onChange={(e) => setKiosSedekahProfile({ ...kiosSedekahProfile, name: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Slogan / Tagline *</label>
+                  <input
+                    type="text"
+                    required
+                    value={kiosSedekahProfile.tagline}
+                    onChange={(e) => setKiosSedekahProfile({ ...kiosSedekahProfile, tagline: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Penanggung Jawab</label>
+                  <input
+                    type="text"
+                    value={kiosSedekahProfile.penanggungJawab}
+                    onChange={(e) => setKiosSedekahProfile({ ...kiosSedekahProfile, penanggungJawab: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Alamat</label>
+                  <input
+                    type="text"
+                    value={kiosSedekahProfile.address}
+                    onChange={(e) => setKiosSedekahProfile({ ...kiosSedekahProfile, address: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">No. Telepon</label>
+                  <input
+                    type="text"
+                    value={kiosSedekahProfile.phone}
+                    onChange={(e) => setKiosSedekahProfile({ ...kiosSedekahProfile, phone: e.target.value })}
+                    placeholder="08123456789"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">No. WhatsApp (format: 628xxxx)</label>
+                  <input
+                    type="text"
+                    value={kiosSedekahProfile.whatsapp}
+                    onChange={(e) => setKiosSedekahProfile({ ...kiosSedekahProfile, whatsapp: e.target.value })}
+                    placeholder="6281234567890"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">Deskripsi Lengkap Kios Sedekah *</label>
+                <textarea
+                  rows={5}
+                  required
+                  value={kiosSedekahProfile.description}
+                  onChange={(e) => setKiosSedekahProfile({ ...kiosSedekahProfile, description: e.target.value })}
+                  placeholder="Jelaskan latar belakang, tujuan, dan cara kerja program Kios Sedekah..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+
+              {/* Program List */}
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-2">Daftar Program Kios Sedekah</label>
+                <div className="space-y-2 mb-3">
+                  {kiosSedekahProfile.programs.map((program, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="flex-1 text-xs text-neutral-800">{program}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveKiosProgram(idx)}
+                        className="p-1 bg-rose-100 text-rose-700 rounded-md cursor-pointer shrink-0"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  {kiosSedekahProfile.programs.length === 0 && (
+                    <p className="text-xs text-neutral-400">Belum ada program ditambahkan.</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newKiosProgram}
+                    onChange={(e) => setNewKiosProgram(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddKiosProgram();
+                      }
+                    }}
+                    placeholder="misal: Paket Sembako Gratis Jum'at Berkah"
+                    className="flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddKiosProgram}
+                    className="px-3.5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Tambah
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="px-6 py-2.5 bg-amber-800 hover:bg-amber-900 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs cursor-pointer"
+              >
+                <Check className="w-4 h-4" />
+                <span>Simpan Perubahan Profil</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Photo Gallery Manager */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-6">
+            <h3 className="font-bold text-base text-neutral-900">Tambah Foto Dokumentasi Kios Sedekah</h3>
+            <form onSubmit={handleAddKiosPhoto} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">URL Foto Image *</label>
+                  {newKiosPhotoUrl && (
+                    <div className="relative mb-2 group">
+                      <img src={newKiosPhotoUrl} alt="Preview Foto Baru" className="w-full h-24 rounded-xl object-cover border border-neutral-200" />
+                      <button
+                        type="button"
+                        onClick={() => setNewKiosPhotoUrl('')}
+                        title="Hapus Foto"
+                        className="absolute top-2 right-2 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md cursor-pointer transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://images.unsplash.com/..."
+                    value={newKiosPhotoUrl}
+                    onChange={(e) => setNewKiosPhotoUrl(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                  <label className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-800 hover:bg-amber-900 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{isUploadingKiosPhoto ? 'Memproses...' : 'Unggah Foto dari HP / Komputer'}</span>
+                    <input type="file" accept="image/*" onChange={handleKiosPhotoFileUpload} disabled={isUploadingKiosPhoto} className="hidden" />
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Keterangan Foto</label>
+                  <textarea
+                    rows={4}
+                    placeholder="misal: Penyaluran sembako Jum'at Berkah untuk warga sekitar"
+                    value={newKiosPhotoCaption}
+                    onChange={(e) => setNewKiosPhotoCaption(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-amber-800 hover:bg-amber-900 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Tambah Foto Ke Galeri Kios Sedekah
+              </button>
+            </form>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-neutral-100">
+              {kiosSedekahProfile.photos.map((p) => (
+                <div key={p.id} className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200 relative group">
+                  <img src={p.url} alt={p.caption} className="w-full h-32 object-cover rounded-xl" />
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span className="font-medium text-[11px] text-neutral-700 leading-snug line-clamp-2">{p.caption || 'Tanpa keterangan'}</span>
+                    <button
+                      onClick={() => handleDeleteKiosPhoto(p.id)}
+                      className="p-1 bg-rose-100 text-rose-700 rounded-md cursor-pointer shrink-0"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {kiosSedekahProfile.photos.length === 0 && (
+                <p className="text-xs text-neutral-400 col-span-full">Belum ada foto dokumentasi.</p>
+              )}
             </div>
           </div>
         </div>

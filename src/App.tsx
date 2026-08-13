@@ -10,11 +10,12 @@ import { OrderReceiptModal } from './components/OrderReceiptModal';
 import { Footer } from './components/Footer';
 import { AdminPanel } from './components/AdminPanel';
 import { TahfidzSection } from './components/TahfidzSection';
+import { KiosSedekahSection } from './components/KiosSedekahSection';
 import { CustomPageView } from './components/CustomPageView';
 
 import { db } from './services/db';
 import { applyGlobalTheme } from './utils/theme';
-import { Product, CartItem, OrderDetails, StoreInfo, SiteSettings, CustomPhoto, AdminUser, TahfidzProfile, Santri, KegiatanSantri, CustomPage } from './types';
+import { Product, CartItem, OrderDetails, StoreInfo, SiteSettings, CustomPhoto, AdminUser, TahfidzProfile, Santri, KegiatanSantri, CustomPage, KiosSedekahProfile } from './types';
 import { SlidersHorizontal, Tag, Info } from 'lucide-react';
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
   const [santriList, setSantriList] = useState<Santri[]>(() => db.getSantriList());
   const [kegiatanList, setKegiatanList] = useState<KegiatanSantri[]>(() => db.getKegiatanList());
   const [customPages, setCustomPages] = useState<CustomPage[]>(() => db.getCustomPages());
+  const [kiosSedekahProfile, setKiosSedekahProfile] = useState<KiosSedekahProfile>(() => db.getKiosSedekahProfile());
 
   // Shopping Cart & Modals State
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -56,6 +58,7 @@ export default function App() {
       const updatedSantri = db.getSantriList();
       const updatedKegiatan = db.getKegiatanList();
       const updatedCustomPages = db.getCustomPages();
+      const updatedKiosSedekahProfile = db.getKiosSedekahProfile();
 
       setProducts(updatedProducts);
       setStoreInfo(updatedStoreInfo);
@@ -66,6 +69,7 @@ export default function App() {
       setSantriList(updatedSantri);
       setKegiatanList(updatedKegiatan);
       setCustomPages(updatedCustomPages);
+      setKiosSedekahProfile(updatedKiosSedekahProfile);
 
       // Re-apply styles live
       applyGlobalTheme(updatedSiteSettings);
@@ -325,6 +329,11 @@ export default function App() {
               santriList={santriList}
               kegiatanList={kegiatanList}
             />
+          )}
+
+          {/* Kios Sedekah Section View */}
+          {activeTab === 'kios_sedekah' && (
+            <KiosSedekahSection kiosSedekahProfile={kiosSedekahProfile} />
           )}
 
           {/* About Section View */}

@@ -64,6 +64,8 @@ export interface NavLabels {
   catalog: string;
   tahfidz: string;
   tahfidzBadge: string;
+  kiosSedekah: string;
+  kiosSedekahBadge: string;
   about: string;
   packages: string;
   packagesBadge: string;
@@ -146,5 +148,24 @@ export interface KegiatanSantri {
   description: string;
   photoUrl: string;
   createdAt: string;
+}
+
+export interface KiosSedekahPhoto {
+  id: string;
+  url: string;
+  caption: string;
+}
+
+export interface KiosSedekahProfile {
+  name: string;
+  tagline: string;
+  logoUrl: string;
+  description: string;
+  programs: string[];
+  address: string;
+  phone: string;
+  whatsapp: string;
+  penanggungJawab: string;
+  photos: KiosSedekahPhoto[];
 }
 
