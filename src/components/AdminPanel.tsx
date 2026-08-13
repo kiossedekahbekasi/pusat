@@ -14,7 +14,8 @@ import {
   TahfidzProfile,
   Santri,
   KegiatanSantri,
-  CustomPage
+  CustomPage,
+  NavLabels
 } from '../types';
 import { 
   Lock, 
@@ -680,6 +681,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       heroSubtitle: heroSubtitleInput,
     });
     showToast('Judul & Subjudul Banner website berhasil disimpan ke database!');
+  };
+
+  // ---------------- NAVBAR LABELS HANDLERS ----------------
+  const [navLabelsInput, setNavLabelsInput] = useState<NavLabels>(siteSettings.navLabels);
+
+  const handleSaveNavLabels = (e: React.FormEvent) => {
+    e.preventDefault();
+    db.saveSiteSettings({ navLabels: navLabelsInput });
+    showToast('Nama menu navbar berhasil disimpan ke seluruh website!');
   };
 
   // ---------------- PHOTO MANAGER HANDLERS ----------------
@@ -1627,7 +1637,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-1">URL Gambar Foto Produk</label>
                 {prodImage && (
-                  <img src={prodImage} alt="Preview Produk" className="w-20 h-20 rounded-xl object-cover border border-neutral-200 mb-2" />
+                  <div className="relative inline-block mb-2 group">
+                    <img src={prodImage} alt="Preview Produk" className="w-20 h-20 rounded-xl object-cover border border-neutral-200" />
+                    <button
+                      type="button"
+                      onClick={() => setProdImage('')}
+                      title="Hapus Foto"
+                      className="absolute -top-2 -right-2 p-1 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md cursor-pointer transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
                 )}
                 <input
                   type="url"
@@ -1771,6 +1791,112 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         <div className="space-y-6">
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-6">
             <h3 className="font-bold text-lg text-neutral-900 flex items-center gap-2">
+              <Type className="w-5 h-5 text-teal-600" /> Pengaturan Nama Menu Navbar
+            </h3>
+            <p className="text-xs text-neutral-500 -mt-4">Ubah semua nama menu yang tampil di navigasi atas website. Kosongkan label lencana (badge) jika tidak ingin ditampilkan.</p>
+
+            <form onSubmit={handleSaveNavLabels} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Menu: Katalog Sembako</label>
+                  <input
+                    type="text"
+                    required
+                    value={navLabelsInput.catalog}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, catalog: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Menu: Tentang Toko</label>
+                  <input
+                    type="text"
+                    required
+                    value={navLabelsInput.about}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, about: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Menu: Rumah Tahfidz</label>
+                  <input
+                    type="text"
+                    required
+                    value={navLabelsInput.tahfidz}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, tahfidz: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Lencana Menu Rumah Tahfidz</label>
+                  <input
+                    type="text"
+                    placeholder="misal: Baru (kosongkan untuk sembunyikan)"
+                    value={navLabelsInput.tahfidzBadge}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, tahfidzBadge: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Menu: Paket Hemat & Promo</label>
+                  <input
+                    type="text"
+                    required
+                    value={navLabelsInput.packages}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, packages: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Lencana Menu Paket Hemat</label>
+                  <input
+                    type="text"
+                    placeholder="misal: Hemat (kosongkan untuk sembunyikan)"
+                    value={navLabelsInput.packagesBadge}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, packagesBadge: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Tombol: Keranjang</label>
+                  <input
+                    type="text"
+                    required
+                    value={navLabelsInput.cart}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, cart: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Tombol: Login / Admin</label>
+                  <input
+                    type="text"
+                    required
+                    value={navLabelsInput.admin}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, admin: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Simpan Nama Menu Navbar
+              </button>
+            </form>
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-6">
+            <h3 className="font-bold text-lg text-neutral-900 flex items-center gap-2">
               <ImageIcon className="w-5 h-5 text-teal-600" /> Pengaturan Foto Logo & Banner
             </h3>
 
@@ -1779,7 +1905,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <label className="block text-xs font-bold text-neutral-700 mb-1">URL Logo Toko Sembako</label>
                 <div className="flex items-center gap-3">
                   {logoUrlInput && (
-                    <img src={logoUrlInput} alt="Logo Preview" className="w-12 h-12 rounded-lg object-cover border border-neutral-200 shrink-0" />
+                    <div className="relative shrink-0 group">
+                      <img src={logoUrlInput} alt="Logo Preview" className="w-12 h-12 rounded-lg object-cover border border-neutral-200" />
+                      <button
+                        type="button"
+                        onClick={() => setLogoUrlInput('')}
+                        title="Hapus Foto"
+                        className="absolute -top-2 -right-2 p-1 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md cursor-pointer transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
                   )}
                   <input
                     type="url"
@@ -1799,7 +1935,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-1">URL Gambar Banner Utama (Hero Banner)</label>
                 {bannerUrlInput && (
-                  <img src={bannerUrlInput} alt="Banner Preview" className="w-full h-28 rounded-xl object-cover border border-neutral-200 mb-2" />
+                  <div className="relative mb-2 group">
+                    <img src={bannerUrlInput} alt="Banner Preview" className="w-full h-28 rounded-xl object-cover border border-neutral-200" />
+                    <button
+                      type="button"
+                      onClick={() => setBannerUrlInput('')}
+                      title="Hapus Foto"
+                      className="absolute top-2 right-2 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md cursor-pointer transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 )}
                 <input
                   type="url"
@@ -1842,7 +1988,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-1">URL Foto Image *</label>
                   {newPhotoUrl && (
-                    <img src={newPhotoUrl} alt="Preview Foto Baru" className="w-full h-24 rounded-xl object-cover border border-neutral-200 mb-2" />
+                    <div className="relative mb-2 group">
+                      <img src={newPhotoUrl} alt="Preview Foto Baru" className="w-full h-24 rounded-xl object-cover border border-neutral-200" />
+                      <button
+                        type="button"
+                        onClick={() => setNewPhotoUrl('')}
+                        title="Hapus Foto"
+                        className="absolute top-2 right-2 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md cursor-pointer transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   )}
                   <input
                     type="url"
@@ -1912,7 +2068,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <div className="p-5 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row items-center gap-6">
               <div className="w-24 h-24 rounded-2xl bg-white p-2 border-2 border-amber-400 shadow-xs flex items-center justify-center shrink-0 overflow-hidden relative group">
                 {tahfidzProfile.logoUrl ? (
-                  <img src={tahfidzProfile.logoUrl} alt="Logo Preview" className="w-full h-full object-cover rounded-xl" />
+                  <>
+                    <img src={tahfidzProfile.logoUrl} alt="Logo Preview" className="w-full h-full object-cover rounded-xl" />
+                    <button
+                      type="button"
+                      onClick={() => setTahfidzProfile({ ...tahfidzProfile, logoUrl: '' })}
+                      title="Hapus Foto"
+                      className="absolute -top-2 -right-2 p-1 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md cursor-pointer transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </>
                 ) : (
                   <BookOpen className="w-10 h-10 text-emerald-700" />
                 )}
@@ -2194,9 +2360,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
               {/* Photo Upload for Santri */}
               <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200 flex flex-col sm:flex-row items-center gap-4">
-                <div className="w-16 h-16 rounded-xl bg-neutral-200 border border-neutral-300 shrink-0 overflow-hidden">
+                <div className="w-16 h-16 rounded-xl bg-neutral-200 border border-neutral-300 shrink-0 overflow-hidden relative group">
                   {santriForm.photoUrl ? (
-                    <img src={santriForm.photoUrl} alt="Santri Preview" className="w-full h-full object-cover" />
+                    <>
+                      <img src={santriForm.photoUrl} alt="Santri Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setSantriForm({ ...santriForm, photoUrl: '' })}
+                        title="Hapus Foto"
+                        className="absolute -top-1.5 -right-1.5 p-1 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md cursor-pointer transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </>
                   ) : (
                     <User className="w-8 h-8 mx-auto mt-4 text-neutral-400" />
                   )}
@@ -2403,9 +2579,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
               {/* Upload Foto Kegiatan */}
               <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200 flex flex-col sm:flex-row items-center gap-4">
-                <div className="w-24 h-16 rounded-xl bg-neutral-200 border border-neutral-300 shrink-0 overflow-hidden">
+                <div className="w-24 h-16 rounded-xl bg-neutral-200 border border-neutral-300 shrink-0 overflow-hidden relative group">
                   {kegiatanForm.photoUrl ? (
-                    <img src={kegiatanForm.photoUrl} alt="Kegiatan Preview" className="w-full h-full object-cover" />
+                    <>
+                      <img src={kegiatanForm.photoUrl} alt="Kegiatan Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setKegiatanForm({ ...kegiatanForm, photoUrl: '' })}
+                        title="Hapus Foto"
+                        className="absolute -top-1.5 -right-1.5 p-1 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md cursor-pointer transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </>
                   ) : (
                     <ImageIcon className="w-6 h-6 mx-auto mt-5 text-neutral-400" />
                   )}

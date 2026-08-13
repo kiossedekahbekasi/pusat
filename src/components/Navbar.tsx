@@ -142,7 +142,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="relative p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-all flex items-center gap-2 font-medium text-sm group cursor-pointer"
             >
               <ShoppingBag className="w-5 h-5 text-emerald-700 group-hover:scale-110 transition-transform" />
-              <span className="hidden sm:inline font-semibold">Keranjang</span>
+              <span className="hidden sm:inline font-semibold">{siteSettings.navLabels.cart}</span>
               {cartItemCount > 0 && (
                 <span className="bg-emerald-600 text-white text-xs font-bold rounded-full h-5 min-w-5 px-1.5 flex items-center justify-center animate-bounce">
                   {cartItemCount}
@@ -180,7 +180,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Store className="w-4 h-4" />
-            <span>Katalog Sembako</span>
+            <span>{siteSettings.navLabels.catalog}</span>
           </button>
 
           <button
@@ -192,8 +192,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <BookOpen className="w-4 h-4 text-emerald-700" />
-            <span>Rumah Tahfidz Nurul A'laa</span>
-            <span className="bg-amber-400 text-emerald-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full uppercase">Baru</span>
+            <span>{siteSettings.navLabels.tahfidz}</span>
+            {siteSettings.navLabels.tahfidzBadge && (
+              <span className="bg-amber-400 text-emerald-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full uppercase">{siteSettings.navLabels.tahfidzBadge}</span>
+            )}
           </button>
 
           <button
@@ -205,7 +207,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Info className="w-4 h-4" />
-            <span>Tentang Toko Sembako</span>
+            <span>{siteSettings.navLabels.about}</span>
           </button>
 
           <button
@@ -217,8 +219,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Gift className="w-4 h-4 text-amber-300" />
-            <span>Paket Hemat & Promo</span>
-            <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full">Hemat</span>
+            <span>{siteSettings.navLabels.packages}</span>
+            {siteSettings.navLabels.packagesBadge && (
+              <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{siteSettings.navLabels.packagesBadge}</span>
+            )}
           </button>
 
           {/* Dynamic Custom Pages Links */}
@@ -256,7 +260,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <>
                 <Shield className="w-4 h-4 text-emerald-600" />
-                <span>Halaman Login / Admin</span>
+                <span>{siteSettings.navLabels.admin}</span>
               </>
             )}
           </button>

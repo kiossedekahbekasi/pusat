@@ -60,6 +60,17 @@ export type FontFamilyType = 'Plus Jakarta Sans' | 'Inter' | 'Poppins' | 'Playfa
 export type FontSizeScale = 'sm' | 'md' | 'lg' | 'xl';
 export type PrimaryColorTheme = 'emerald' | 'teal' | 'amber' | 'blue' | 'indigo' | 'rose';
 
+export interface NavLabels {
+  catalog: string;
+  tahfidz: string;
+  tahfidzBadge: string;
+  about: string;
+  packages: string;
+  packagesBadge: string;
+  cart: string;
+  admin: string;
+}
+
 export interface SiteSettings {
   fontFamily: FontFamilyType;
   fontSize: FontSizeScale;
@@ -68,6 +79,7 @@ export interface SiteSettings {
   heroSubtitle: string;
   heroBannerImage: string;
   storeLogoImage: string;
+  navLabels: NavLabels;
 }
 
 export interface CustomPhoto {

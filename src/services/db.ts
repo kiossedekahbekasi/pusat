@@ -55,6 +55,16 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   heroSubtitle: 'Menyediakan Beras, Minyak, Gula, Telur, Mie & Kebutuhan Pokok Dapur Eceran & Grosir Harga Distributor.',
   heroBannerImage: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=1200',
   storeLogoImage: '',
+  navLabels: {
+    catalog: 'Katalog Sembako',
+    tahfidz: "Rumah Tahfidz Nurul A'laa",
+    tahfidzBadge: 'Baru',
+    about: 'Tentang Toko Sembako',
+    packages: 'Paket Hemat & Promo',
+    packagesBadge: 'Hemat',
+    cart: 'Keranjang',
+    admin: 'Halaman Login / Admin',
+  },
 };
 
 export const DEFAULT_PHOTOS: CustomPhoto[] = [
@@ -288,7 +298,12 @@ export const db = {
         saveToFirestore('settings', DEFAULT_SITE_SETTINGS);
         return DEFAULT_SITE_SETTINGS;
       }
-      return { ...DEFAULT_SITE_SETTINGS, ...JSON.parse(data) };
+      const parsed = JSON.parse(data);
+      return {
+        ...DEFAULT_SITE_SETTINGS,
+        ...parsed,
+        navLabels: { ...DEFAULT_SITE_SETTINGS.navLabels, ...(parsed.navLabels || {}) },
+      };
     } catch {
       return DEFAULT_SITE_SETTINGS;
     }
@@ -296,7 +311,11 @@ export const db = {
 
   saveSiteSettings(settings: Partial<SiteSettings>): void {
     const current = this.getSiteSettings();
-    const updated = { ...current, ...settings };
+    const updated = {
+      ...current,
+      ...settings,
+      navLabels: { ...current.navLabels, ...(settings.navLabels || {}) },
+    };
     localStorage.setItem(KEYS.SETTINGS, JSON.stringify(updated));
     saveToFirestore('settings', updated);
     notifyDBChange();
