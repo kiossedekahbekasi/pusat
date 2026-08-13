@@ -1,0 +1,6 @@
+{
+  "name": "Toko Sembako Berkah Utama",
+  "description": "Aplikasi Toko Sembako online menyediakan sembilan bahan pokok berkualitas, eceran dan grosir, paket hemat, serta informasi lengkap tentang toko.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

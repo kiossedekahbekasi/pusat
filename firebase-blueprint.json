@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "products": {
+      "title": "Products",
+      "description": "Products catalog for Sembako store",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "number" },
+        "wholesalePrice": { "type": "number" },
+        "minWholesaleQty": { "type": "number" },
+        "unit": { "type": "string" },
+        "stock": { "type": "number" },
+        "image": { "type": "string" },
+        "description": { "type": "string" },
+        "isBestSeller": { "type": "boolean" },
+        "badge": { "type": "string" }
+      },
+      "required": ["id", "name", "category", "price", "unit", "stock"]
+    },
+    "orders": {
+      "title": "Orders",
+      "description": "Customer orders",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerName": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "deliveryType": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "date": { "type": "string" },
+        "status": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "customerName", "phone", "totalAmount", "status"]
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Site settings and store info",
+      "type": "object",
+      "properties": {
+        "fontFamily": { "type": "string" },
+        "fontSize": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "heroTitle": { "type": "string" },
+        "heroSubtitle": { "type": "string" }
+      }
+    },
+    "storeInfo": {
+      "title": "Store Info",
+      "description": "Store operational information",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "tagline": { "type": "string" },
+        "description": { "type": "string" },
+        "established": { "type": "number" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "operatingHours": { "type": "string" }
+      }
+    },
+    "photos": {
+      "title": "Photos",
+      "description": "Custom photo gallery",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "url": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    }
+  }
+}
