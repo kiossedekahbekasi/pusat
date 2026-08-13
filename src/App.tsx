@@ -10,14 +10,15 @@ import { OrderReceiptModal } from './components/OrderReceiptModal';
 import { Footer } from './components/Footer';
 import { AdminPanel } from './components/AdminPanel';
 import { TahfidzSection } from './components/TahfidzSection';
+import { CustomPageView } from './components/CustomPageView';
 
 import { db } from './services/db';
 import { applyGlobalTheme } from './utils/theme';
-import { Product, CartItem, OrderDetails, StoreInfo, SiteSettings, CustomPhoto, AdminUser, TahfidzProfile, Santri, KegiatanSantri } from './types';
+import { Product, CartItem, OrderDetails, StoreInfo, SiteSettings, CustomPhoto, AdminUser, TahfidzProfile, Santri, KegiatanSantri, CustomPage } from './types';
 import { SlidersHorizontal, Tag, Info } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'catalog' | 'tahfidz' | 'about' | 'packages' | 'admin'>('catalog');
+  const [activeTab, setActiveTab] = useState<string>('catalog');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isWholesaleMode, setIsWholesaleMode] = useState<boolean>(false);
@@ -32,6 +33,7 @@ export default function App() {
   const [tahfidzProfile, setTahfidzProfile] = useState<TahfidzProfile>(() => db.getTahfidzProfile());
   const [santriList, setSantriList] = useState<Santri[]>(() => db.getSantriList());
   const [kegiatanList, setKegiatanList] = useState<KegiatanSantri[]>(() => db.getKegiatanList());
+  const [customPages, setCustomPages] = useState<CustomPage[]>(() => db.getCustomPages());
 
   // Shopping Cart & Modals State
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -53,6 +55,7 @@ export default function App() {
       const updatedTahfidzProfile = db.getTahfidzProfile();
       const updatedSantri = db.getSantriList();
       const updatedKegiatan = db.getKegiatanList();
+      const updatedCustomPages = db.getCustomPages();
 
       setProducts(updatedProducts);
       setStoreInfo(updatedStoreInfo);
@@ -62,6 +65,7 @@ export default function App() {
       setTahfidzProfile(updatedTahfidzProfile);
       setSantriList(updatedSantri);
       setKegiatanList(updatedKegiatan);
+      setCustomPages(updatedCustomPages);
 
       // Re-apply styles live
       applyGlobalTheme(updatedSiteSettings);
@@ -69,6 +73,23 @@ export default function App() {
 
     return () => unsubscribe();
   }, [siteSettings]);
+
+  // Update browser tab title & favicon to match the store's name and logo.
+  useEffect(() => {
+    document.title = storeInfo.name || 'Toko Sembako';
+
+    const faviconUrl = siteSettings.storeLogoImage || tahfidzProfile.logoUrl;
+    if (faviconUrl) {
+      let link = document.getElementById('dynamic-favicon') as HTMLLinkElement | null;
+      if (!link) {
+        link = document.createElement('link');
+        link.id = 'dynamic-favicon';
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.href = faviconUrl;
+    }
+  }, [storeInfo.name, siteSettings.storeLogoImage, tahfidzProfile.logoUrl]);
 
   const categories = [
     { id: 'all', label: 'Semua Sembako' },
@@ -166,6 +187,8 @@ export default function App() {
           siteSettings={siteSettings}
           storeInfo={storeInfo}
           adminUser={adminUser}
+          tahfidzProfile={tahfidzProfile}
+          customPages={customPages}
         />
 
         {/* Main Content Area */}
@@ -325,6 +348,11 @@ export default function App() {
               products={products}
               photos={photos}
             />
+          )}
+
+          {/* Custom Page View (halaman tambahan buatan admin) */}
+          {customPages.some((p) => p.id === activeTab) && (
+            <CustomPageView page={customPages.find((p) => p.id === activeTab)!} />
           )}
         </main>
       </div>

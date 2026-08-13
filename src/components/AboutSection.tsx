@@ -56,6 +56,12 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ storeInfo, photos })
             Berdiri sejak tahun {storeInfo.established}, {storeInfo.name} berkomitmen menjadi mitra terpercaya keluarga dan pelaku usaha mikro dalam menyediakan sembilan bahan pokok harian berstandar mutlak dengan harga grosir dan eceran yang jujur.
           </p>
 
+          {storeInfo.description && (
+            <p className="text-emerald-50 text-sm sm:text-base leading-relaxed whitespace-pre-line bg-emerald-950/30 rounded-2xl p-4 border border-emerald-700/40">
+              {storeInfo.description}
+            </p>
+          )}
+
           <div className="flex flex-wrap gap-6 pt-4 border-t border-emerald-700/50 text-emerald-200 text-sm">
             <div>
               <span className="block text-2xl font-black text-amber-300">12+ Tahun</span>

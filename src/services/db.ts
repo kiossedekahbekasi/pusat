@@ -1,4 +1,4 @@
-import { Product, StoreInfo, SiteSettings, CustomPhoto, AdminUser, OrderDetails, TahfidzProfile, Santri, KegiatanSantri } from '../types';
+import { Product, StoreInfo, SiteSettings, CustomPhoto, AdminUser, OrderDetails, TahfidzProfile, Santri, KegiatanSantri, CustomPage } from '../types';
 import { INITIAL_PRODUCTS, STORE_INFO } from '../data/storeData';
 import { DEFAULT_TAHFIDZ_PROFILE, DEFAULT_SANTRI_LIST, DEFAULT_KEGIATAN_LIST } from '../data/tahfidzData';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
@@ -15,6 +15,7 @@ const KEYS = {
   TAHFIDZ_PROFILE: 'tsbu_db_tahfidz_profile_v1',
   SANTRI: 'tsbu_db_santri_v1',
   KEGIATAN: 'tsbu_db_kegiatan_v1',
+  CUSTOM_PAGES: 'tsbu_db_custom_pages_v1',
 };
 
 // Helper to sync to Firestore in background
@@ -39,6 +40,7 @@ if (typeof window !== 'undefined') {
       saveToFirestore('tahfidzProfile', JSON.parse(localStorage.getItem(KEYS.TAHFIDZ_PROFILE) || JSON.stringify(DEFAULT_TAHFIDZ_PROFILE)));
       saveToFirestore('santri', JSON.parse(localStorage.getItem(KEYS.SANTRI) || JSON.stringify(DEFAULT_SANTRI_LIST)));
       saveToFirestore('kegiatan', JSON.parse(localStorage.getItem(KEYS.KEGIATAN) || JSON.stringify(DEFAULT_KEGIATAN_LIST)));
+      saveToFirestore('customPages', JSON.parse(localStorage.getItem(KEYS.CUSTOM_PAGES) || '[]'));
     } catch (e) {
       console.warn('Initial Firestore sync error:', e);
     }
@@ -173,7 +175,7 @@ if (typeof window !== 'undefined') {
 
 // Setup automatic real-time listener from Firestore
 if (typeof window !== 'undefined') {
-  const collectionsToSync = ['products', 'storeInfo', 'settings', 'photos', 'orders', 'tahfidzProfile', 'santri', 'kegiatan'];
+  const collectionsToSync = ['products', 'storeInfo', 'settings', 'photos', 'orders', 'tahfidzProfile', 'santri', 'kegiatan', 'customPages'];
   collectionsToSync.forEach((key) => {
     try {
       const docRef = doc(firestore, 'store_data', key);
@@ -192,6 +194,7 @@ if (typeof window !== 'undefined') {
                 tahfidzProfile: KEYS.TAHFIDZ_PROFILE,
                 santri: KEYS.SANTRI,
                 kegiatan: KEYS.KEGIATAN,
+                customPages: KEYS.CUSTOM_PAGES,
               };
               const storageKey = localKeyMap[key];
               if (storageKey) {
@@ -521,6 +524,50 @@ export const db = {
     this.saveKegiatanList(updated);
   },
 
+  // CUSTOM PAGES (halaman tambahan yang bisa dibuat admin)
+  getCustomPages(): CustomPage[] {
+    try {
+      const data = localStorage.getItem(KEYS.CUSTOM_PAGES);
+      if (!data) {
+        localStorage.setItem(KEYS.CUSTOM_PAGES, JSON.stringify([]));
+        return [];
+      }
+      return JSON.parse(data);
+    } catch {
+      return [];
+    }
+  },
+
+  saveCustomPages(list: CustomPage[]): void {
+    localStorage.setItem(KEYS.CUSTOM_PAGES, JSON.stringify(list));
+    saveToFirestore('customPages', list);
+    notifyDBChange();
+  },
+
+  addCustomPage(item: Omit<CustomPage, 'id' | 'createdAt'>): CustomPage {
+    const list = this.getCustomPages();
+    const newItem: CustomPage = {
+      ...item,
+      id: `page-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    const updated = [...list, newItem];
+    this.saveCustomPages(updated);
+    return newItem;
+  },
+
+  updateCustomPage(item: CustomPage): void {
+    const list = this.getCustomPages();
+    const updated = list.map((p) => (p.id === item.id ? item : p));
+    this.saveCustomPages(updated);
+  },
+
+  deleteCustomPage(id: string): void {
+    const list = this.getCustomPages();
+    const updated = list.filter((p) => p.id !== id);
+    this.saveCustomPages(updated);
+  },
+
   // RESET DATABASE
   resetToDefaults(): void {
     localStorage.setItem(KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
@@ -531,6 +578,7 @@ export const db = {
     localStorage.setItem(KEYS.TAHFIDZ_PROFILE, JSON.stringify(DEFAULT_TAHFIDZ_PROFILE));
     localStorage.setItem(KEYS.SANTRI, JSON.stringify(DEFAULT_SANTRI_LIST));
     localStorage.setItem(KEYS.KEGIATAN, JSON.stringify(DEFAULT_KEGIATAN_LIST));
+    localStorage.setItem(KEYS.CUSTOM_PAGES, JSON.stringify([]));
     saveToFirestore('products', INITIAL_PRODUCTS);
     saveToFirestore('storeInfo', STORE_INFO);
     saveToFirestore('settings', DEFAULT_SITE_SETTINGS);
@@ -539,6 +587,7 @@ export const db = {
     saveToFirestore('tahfidzProfile', DEFAULT_TAHFIDZ_PROFILE);
     saveToFirestore('santri', DEFAULT_SANTRI_LIST);
     saveToFirestore('kegiatan', DEFAULT_KEGIATAN_LIST);
+    saveToFirestore('customPages', []);
     notifyDBChange();
   },
 

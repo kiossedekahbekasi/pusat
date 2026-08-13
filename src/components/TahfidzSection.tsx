@@ -55,16 +55,13 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
                   src={tahfidzProfile.logoUrl}
                   alt={tahfidzProfile.name}
                   className="w-full h-full object-cover rounded-xl"
-                  onError={(e) => {
-                    // Fallback if image breaks
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
                 />
-              ) : null}
-              <div className="flex flex-col items-center text-center p-2 text-amber-300">
-                <BookOpen className="w-10 h-10 mb-1" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">NURUL A'LAA</span>
-              </div>
+              ) : (
+                <div className="flex flex-col items-center text-center p-2 text-amber-300">
+                  <BookOpen className="w-10 h-10 mb-1" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">NURUL A'LAA</span>
+                </div>
+              )}
             </div>
             <div className="absolute -bottom-2 -right-2 bg-amber-400 text-emerald-950 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase shadow-md flex items-center gap-1">
               <Sparkles className="w-3 h-3" /> Tahfidz

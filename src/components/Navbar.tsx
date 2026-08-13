@@ -1,10 +1,10 @@
 import React from 'react';
 import { ShoppingBag, Search, Store, Info, Gift, PhoneCall, SlidersHorizontal, UserCheck, Shield, BookOpen } from 'lucide-react';
-import { StoreInfo, AdminUser, SiteSettings } from '../types';
+import { StoreInfo, AdminUser, SiteSettings, TahfidzProfile, CustomPage } from '../types';
 
 interface NavbarProps {
-  activeTab: 'catalog' | 'tahfidz' | 'about' | 'packages' | 'admin';
-  setActiveTab: (tab: 'catalog' | 'tahfidz' | 'about' | 'packages' | 'admin') => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
   cartItemCount: number;
   setIsCartOpen: (open: boolean) => void;
   searchQuery: string;
@@ -14,6 +14,8 @@ interface NavbarProps {
   storeInfo: StoreInfo;
   adminUser: AdminUser | null;
   siteSettings: SiteSettings;
+  tahfidzProfile?: TahfidzProfile;
+  customPages?: CustomPage[];
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -28,6 +30,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   storeInfo,
   adminUser,
   siteSettings,
+  tahfidzProfile,
+  customPages = [],
 }) => {
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-neutral-200 shadow-2xs">
@@ -57,21 +61,30 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* Logo & Brand */}
-          <div 
-            onClick={() => setActiveTab('catalog')} 
+          <div
+            onClick={() => setActiveTab('catalog')}
             className="flex items-center gap-3 cursor-pointer select-none shrink-0"
           >
-            {siteSettings.storeLogoImage ? (
-              <img
-                src={siteSettings.storeLogoImage}
-                alt="Logo Toko"
-                className="w-10 h-10 rounded-xl object-cover border border-emerald-300 shadow-xs"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-md font-bold text-xl">
-                <Store className="w-6 h-6" />
-              </div>
-            )}
+            <div className="flex items-center -space-x-3">
+              {siteSettings.storeLogoImage ? (
+                <img
+                  src={siteSettings.storeLogoImage}
+                  alt="Logo Toko"
+                  className="w-10 h-10 rounded-xl object-cover border-2 border-white shadow-xs z-10 relative bg-white"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-md font-bold text-xl border-2 border-white z-10 relative">
+                  <Store className="w-6 h-6" />
+                </div>
+              )}
+              {tahfidzProfile?.logoUrl && (
+                <img
+                  src={tahfidzProfile.logoUrl}
+                  alt="Logo Rumah Tahfidz"
+                  className="w-10 h-10 rounded-xl object-cover border-2 border-white shadow-xs bg-white"
+                />
+              )}
+            </div>
             <div>
               <h1 className="font-bold text-lg text-neutral-900 leading-tight tracking-tight flex items-center gap-1.5">
                 {storeInfo.name}
@@ -207,6 +220,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>Paket Hemat & Promo</span>
             <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full">Hemat</span>
           </button>
+
+          {/* Dynamic Custom Pages Links */}
+          {customPages.map((page) => (
+            <button
+              key={page.id}
+              onClick={() => setActiveTab(page.id)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                activeTab === page.id
+                  ? 'bg-emerald-800 text-white shadow-xs font-bold'
+                  : 'text-neutral-600 hover:bg-neutral-100'
+              }`}
+            >
+              <span>{page.icon || '📄'}</span>
+              <span>{page.title}</span>
+            </button>
+          ))}
 
           {/* New Login / Admin Menu Tab */}
           <button

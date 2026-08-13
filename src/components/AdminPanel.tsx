@@ -13,7 +13,8 @@ import {
   PrimaryColorTheme,
   TahfidzProfile,
   Santri,
-  KegiatanSantri
+  KegiatanSantri,
+  CustomPage
 } from '../types';
 import { 
   Lock, 
@@ -79,7 +80,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [loginError, setLoginError] = useState<string>('');
 
   // Admin Sub-Tab
-  const [adminTab, setAdminTab] = useState<'overview' | 'orders' | 'products' | 'photos' | 'tahfidz_profile' | 'tahfidz_santri' | 'tahfidz_kegiatan' | 'styling' | 'store_info' | 'database'>('overview');
+  const [adminTab, setAdminTab] = useState<'overview' | 'orders' | 'products' | 'photos' | 'tahfidz_profile' | 'tahfidz_santri' | 'tahfidz_kegiatan' | 'styling' | 'store_info' | 'pages' | 'database'>('overview');
 
   // Orders State
   const [orders, setOrders] = useState<OrderDetails[]>(() => db.getOrders());
@@ -91,6 +92,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [tahfidzProfile, setTahfidzProfile] = useState<TahfidzProfile>(() => db.getTahfidzProfile());
   const [santriList, setSantriList] = useState<Santri[]>(() => db.getSantriList());
   const [kegiatanList, setKegiatanList] = useState<KegiatanSantri[]>(() => db.getKegiatanList());
+
+  // Custom Pages State (halaman tambahan)
+  const [customPages, setCustomPages] = useState<CustomPage[]>(() => db.getCustomPages());
+  const [editingPage, setEditingPage] = useState<CustomPage | null>(null);
+  const [pageForm, setPageForm] = useState<{ title: string; content: string; icon: string }>({
+    title: '',
+    content: '',
+    icon: '📄',
+  });
 
   // Editing Santri State
   const [editingSantri, setEditingSantri] = useState<Santri | null>(null);
@@ -134,6 +144,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setTahfidzProfile(db.getTahfidzProfile());
       setSantriList(db.getSantriList());
       setKegiatanList(db.getKegiatanList());
+      setCustomPages(db.getCustomPages());
     });
     return () => unsubscribe();
   }, []);
@@ -538,6 +549,41 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
+  // ---------------- CUSTOM PAGES HANDLERS ----------------
+  const resetPageForm = () => {
+    setEditingPage(null);
+    setPageForm({ title: '', content: '', icon: '📄' });
+  };
+
+  const handleSavePage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pageForm.title.trim() || !pageForm.content.trim()) {
+      alert('Judul Halaman dan Isi Konten wajib diisi!');
+      return;
+    }
+
+    if (editingPage) {
+      db.updateCustomPage({ ...editingPage, ...pageForm });
+      showToast(`Halaman "${pageForm.title}" berhasil diperbarui!`);
+    } else {
+      db.addCustomPage(pageForm);
+      showToast(`Halaman baru "${pageForm.title}" berhasil ditambahkan ke menu navigasi!`);
+    }
+    resetPageForm();
+  };
+
+  const handleStartEditPage = (page: CustomPage) => {
+    setEditingPage(page);
+    setPageForm({ title: page.title, content: page.content, icon: page.icon || '📄' });
+  };
+
+  const handleDeletePage = (id: string, title: string) => {
+    if (confirm(`Apakah Anda yakin ingin menghapus halaman "${title}"? Halaman ini juga akan hilang dari menu navigasi.`)) {
+      db.deleteCustomPage(id);
+      showToast(`Halaman "${title}" telah dihapus.`);
+    }
+  };
+
   // Kegiatan Santri Handlers
   const handleSaveKegiatan = (e: React.FormEvent) => {
     e.preventDefault();
@@ -743,6 +789,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [prodUnit, setProdUnit] = useState('Kg');
   const [prodStock, setProdStock] = useState<number>(50);
   const [prodImage, setProdImage] = useState('');
+  const [isUploadingProductImage, setIsUploadingProductImage] = useState(false);
+  const handleProductImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingProductImage(true);
+    try {
+      // Ukuran dibatasi kecil karena SEMUA produk tersimpan dalam satu dokumen Firestore.
+      const compressed = await compressImageFile(file, { maxDimension: 350, maxSizeKB: 35 });
+      setProdImage(compressed);
+      showToast('Foto produk diunggah! Klik "Simpan" untuk menyimpan produk.');
+    } catch (err: any) {
+      alert(err?.message || 'Gagal memproses foto.');
+    } finally {
+      setIsUploadingProductImage(false);
+      e.target.value = '';
+    }
+  };
   const [prodDescription, setProdDescription] = useState('');
   const [prodIsBestSeller, setProdIsBestSeller] = useState(false);
   const [prodBadge, setProdBadge] = useState('');
@@ -1082,6 +1145,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         >
           <Store className="w-4 h-4 text-rose-400" />
           <span>Profil Toko & Jam Buka</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('pages')}
+          className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+            adminTab === 'pages'
+              ? 'bg-neutral-900 text-white shadow-xs'
+              : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
+          }`}
+        >
+          <FileCode className="w-4 h-4 text-sky-500" />
+          <span>Kelola Halaman ({customPages.length})</span>
         </button>
 
         <button
@@ -1551,6 +1626,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-1">URL Gambar Foto Produk</label>
+                {prodImage && (
+                  <img src={prodImage} alt="Preview Produk" className="w-20 h-20 rounded-xl object-cover border border-neutral-200 mb-2" />
+                )}
                 <input
                   type="url"
                   placeholder="https://images.unsplash.com/photo-..."
@@ -1558,6 +1636,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   onChange={(e) => setProdImage(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                 />
+                <label className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{isUploadingProductImage ? 'Memproses...' : 'Unggah Foto dari HP / Komputer'}</span>
+                  <input type="file" accept="image/*" onChange={handleProductImageFileUpload} disabled={isUploadingProductImage} className="hidden" />
+                </label>
+                <p className="text-[10px] text-neutral-400 mt-1">Foto akan dikompres otomatis ke ukuran kecil (semua produk berbagi satu ruang penyimpanan).</p>
               </div>
 
               <div>
@@ -2531,6 +2615,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </div>
 
             <div>
+              <label className="block text-xs font-bold text-neutral-700 mb-1">Deskripsi / Tentang Toko (tampil di halaman "Tentang Toko Sembako")</label>
+              <textarea
+                rows={4}
+                placeholder="Ceritakan tentang toko Anda, keunggulan, dan komitmen pelayanan..."
+                value={infoDesc}
+                onChange={(e) => setInfoDesc(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              />
+            </div>
+
+            <div>
               <label className="block text-xs font-bold text-neutral-700 mb-1">Alamat Fisik Lengkap Toko</label>
               <textarea
                 rows={2}
@@ -2579,6 +2674,112 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               Simpan Profil Toko
             </button>
           </form>
+        </div>
+      )}
+
+      {/* ---------------- SUB TAB: KELOLA HALAMAN (CUSTOM PAGES) ---------------- */}
+      {adminTab === 'pages' && (
+        <div className="space-y-6 animate-fadeIn">
+          <div className="bg-white rounded-3xl p-6 border border-neutral-200 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+              <h3 className="font-bold text-base text-neutral-900 flex items-center gap-2">
+                <FileCode className="w-5 h-5 text-sky-600" />
+                <span>{editingPage ? `Edit Halaman (${editingPage.title})` : 'Tambah Halaman Baru'}</span>
+              </h3>
+              {editingPage && (
+                <button type="button" onClick={resetPageForm} className="text-xs text-rose-600 font-bold hover:underline">
+                  Batal Edit
+                </button>
+              )}
+            </div>
+
+            <p className="text-xs text-neutral-500 -mt-2">
+              Halaman baru akan otomatis muncul sebagai menu tambahan di navigasi atas website Anda.
+            </p>
+
+            <form onSubmit={handleSavePage} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Judul Halaman *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="misal: Cara Pemesanan, Kebijakan Pengiriman, Karir"
+                    value={pageForm.title}
+                    onChange={(e) => setPageForm({ ...pageForm, title: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Ikon (emoji)</label>
+                  <input
+                    type="text"
+                    maxLength={4}
+                    value={pageForm.icon}
+                    onChange={(e) => setPageForm({ ...pageForm, icon: e.target.value })}
+                    className="w-20 px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">Isi Konten Halaman *</label>
+                <textarea
+                  rows={8}
+                  required
+                  placeholder="Tulis isi halaman di sini. Tekan Enter untuk membuat paragraf baru..."
+                  value={pageForm.content}
+                  onChange={(e) => setPageForm({ ...pageForm, content: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="px-6 py-2.5 bg-sky-700 hover:bg-sky-800 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>{editingPage ? 'Simpan Perubahan Halaman' : 'Publikasikan Halaman Baru'}</span>
+              </button>
+            </form>
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 border border-neutral-200 shadow-xs space-y-4">
+            <h3 className="font-bold text-base text-neutral-900 flex items-center gap-2">
+              <FileCode className="w-5 h-5 text-sky-600" /> Daftar Halaman ({customPages.length})
+            </h3>
+
+            {customPages.length === 0 ? (
+              <p className="text-xs text-neutral-500 py-6 text-center">Belum ada halaman tambahan. Buat halaman pertama Anda di atas.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {customPages.map((page) => (
+                  <div key={page.id} className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200 flex flex-col justify-between gap-3">
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-sm text-neutral-900 flex items-center gap-1.5">
+                        <span>{page.icon || '📄'}</span> {page.title}
+                      </h4>
+                      <p className="text-xs text-neutral-600 line-clamp-3 whitespace-pre-line">{page.content}</p>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-200/60">
+                      <button
+                        onClick={() => handleStartEditPage(page)}
+                        className="px-3 py-1.5 bg-white border border-neutral-300 text-neutral-700 font-bold rounded-lg text-[11px] hover:bg-neutral-100 cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeletePage(page.id, page.title)}
+                        className="px-3 py-1.5 bg-rose-50 border border-rose-200 text-rose-700 font-bold rounded-lg text-[11px] hover:bg-rose-100 cursor-pointer"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

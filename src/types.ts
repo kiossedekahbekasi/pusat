@@ -116,6 +116,14 @@ export interface Santri {
   notes?: string;
 }
 
+export interface CustomPage {
+  id: string;
+  title: string;
+  content: string;
+  icon?: string; // optional emoji shown next to the nav link
+  createdAt: string;
+}
+
 export interface KegiatanSantri {
   id: string;
   title: string;
