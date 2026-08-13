@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, DEFAULT_SITE_SETTINGS } from '../services/db';
+import { compressImageFile } from '../utils/imageUpload';
 import { 
   AdminUser, 
   SiteSettings, 
@@ -442,20 +443,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     showToast("Profil, Visi, Misi & Logo Rumah Tahfidz Nurul A'laa berhasil disimpan!");
   };
 
-  const handleTahfidzLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isUploadingTahfidzLogo, setIsUploadingTahfidzLogo] = useState(false);
+  const handleTahfidzLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Ukuran file foto maksimal 2MB.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setTahfidzProfile((prev) => ({ ...prev, logoUrl: result }));
-        showToast('Logo Rumah Tahfidz diunggah! Klik "Simpan Perubahan Profil" untuk menyimpan.');
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    setIsUploadingTahfidzLogo(true);
+    try {
+      const compressed = await compressImageFile(file, { maxDimension: 400, maxSizeKB: 60 });
+      setTahfidzProfile((prev) => ({ ...prev, logoUrl: compressed }));
+      showToast('Logo Rumah Tahfidz diunggah! Klik "Simpan Perubahan Profil" untuk menyimpan.');
+    } catch (err: any) {
+      alert(err?.message || 'Gagal memproses foto.');
+    } finally {
+      setIsUploadingTahfidzLogo(false);
+      e.target.value = '';
     }
   };
 
@@ -520,20 +521,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
-  const handleSantriPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isUploadingSantriPhoto, setIsUploadingSantriPhoto] = useState(false);
+  const handleSantriPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Ukuran file foto maksimal 2MB.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setSantriForm((prev) => ({ ...prev, photoUrl: result }));
-        showToast('Foto santri berhasil diunggah!');
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    setIsUploadingSantriPhoto(true);
+    try {
+      const compressed = await compressImageFile(file, { maxDimension: 500, maxSizeKB: 70 });
+      setSantriForm((prev) => ({ ...prev, photoUrl: compressed }));
+      showToast('Foto santri berhasil diunggah!');
+    } catch (err: any) {
+      alert(err?.message || 'Gagal memproses foto.');
+    } finally {
+      setIsUploadingSantriPhoto(false);
+      e.target.value = '';
     }
   };
 
@@ -590,20 +591,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
-  const handleKegiatanPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [isUploadingKegiatanPhoto, setIsUploadingKegiatanPhoto] = useState(false);
+  const handleKegiatanPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Ukuran file foto maksimal 2MB.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setKegiatanForm((prev) => ({ ...prev, photoUrl: result }));
-        showToast('Foto kegiatan santri berhasil diunggah!');
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    setIsUploadingKegiatanPhoto(true);
+    try {
+      const compressed = await compressImageFile(file, { maxDimension: 700, maxSizeKB: 100 });
+      setKegiatanForm((prev) => ({ ...prev, photoUrl: compressed }));
+      showToast('Foto kegiatan santri berhasil diunggah!');
+    } catch (err: any) {
+      alert(err?.message || 'Gagal memproses foto.');
+    } finally {
+      setIsUploadingKegiatanPhoto(false);
+      e.target.value = '';
     }
   };
 
@@ -653,6 +654,57 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [newPhotoUrl, setNewPhotoUrl] = useState('');
   const [newPhotoCategory, setNewPhotoCategory] = useState('galeri_toko');
   const [newPhotoDesc, setNewPhotoDesc] = useState('');
+  const [isUploadingGalleryPhoto, setIsUploadingGalleryPhoto] = useState(false);
+
+  const handleGalleryPhotoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingGalleryPhoto(true);
+    try {
+      const compressed = await compressImageFile(file, { maxDimension: 700, maxSizeKB: 100 });
+      setNewPhotoUrl(compressed);
+      showToast('Foto diunggah! Isi judul lalu klik "Tambah Foto Ke Galeri" untuk menyimpan.');
+    } catch (err: any) {
+      alert(err?.message || 'Gagal memproses foto.');
+    } finally {
+      setIsUploadingGalleryPhoto(false);
+      e.target.value = '';
+    }
+  };
+
+  const [isUploadingStoreLogo, setIsUploadingStoreLogo] = useState(false);
+  const handleStoreLogoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingStoreLogo(true);
+    try {
+      const compressed = await compressImageFile(file, { maxDimension: 400, maxSizeKB: 60 });
+      setLogoUrlInput(compressed);
+      showToast('Logo toko diunggah! Klik "Simpan Logo & Banner" untuk menyimpan.');
+    } catch (err: any) {
+      alert(err?.message || 'Gagal memproses foto.');
+    } finally {
+      setIsUploadingStoreLogo(false);
+      e.target.value = '';
+    }
+  };
+
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const handleBannerFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingBanner(true);
+    try {
+      const compressed = await compressImageFile(file, { maxDimension: 1200, maxSizeKB: 300 });
+      setBannerUrlInput(compressed);
+      showToast('Banner utama diunggah! Klik "Simpan Logo & Banner" untuk menyimpan.');
+    } catch (err: any) {
+      alert(err?.message || 'Gagal memproses foto.');
+    } finally {
+      setIsUploadingBanner(false);
+      e.target.value = '';
+    }
+  };
 
   const handleAddPhotoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1641,17 +1693,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <form onSubmit={handleSaveImages} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-1">URL Logo Toko Sembako</label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={logoUrlInput}
-                  onChange={(e) => setLogoUrlInput(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                />
+                <div className="flex items-center gap-3">
+                  {logoUrlInput && (
+                    <img src={logoUrlInput} alt="Logo Preview" className="w-12 h-12 rounded-lg object-cover border border-neutral-200 shrink-0" />
+                  )}
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={logoUrlInput}
+                    onChange={(e) => setLogoUrlInput(e.target.value)}
+                    className="flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+                <label className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{isUploadingStoreLogo ? 'Memproses...' : 'Unggah Foto dari HP / Komputer'}</span>
+                  <input type="file" accept="image/*" onChange={handleStoreLogoFileUpload} disabled={isUploadingStoreLogo} className="hidden" />
+                </label>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-neutral-700 mb-1">URL Gambar Banner Utama (Hero Banner)</label>
+                {bannerUrlInput && (
+                  <img src={bannerUrlInput} alt="Banner Preview" className="w-full h-28 rounded-xl object-cover border border-neutral-200 mb-2" />
+                )}
                 <input
                   type="url"
                   placeholder="https://..."
@@ -1659,6 +1724,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   onChange={(e) => setBannerUrlInput(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                 />
+                <label className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{isUploadingBanner ? 'Memproses...' : 'Unggah Foto dari HP / Komputer'}</span>
+                  <input type="file" accept="image/*" onChange={handleBannerFileUpload} disabled={isUploadingBanner} className="hidden" />
+                </label>
               </div>
 
               <button
@@ -1687,6 +1757,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-1">URL Foto Image *</label>
+                  {newPhotoUrl && (
+                    <img src={newPhotoUrl} alt="Preview Foto Baru" className="w-full h-24 rounded-xl object-cover border border-neutral-200 mb-2" />
+                  )}
                   <input
                     type="url"
                     required
@@ -1695,6 +1768,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     onChange={(e) => setNewPhotoUrl(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                   />
+                  <label className="mt-2 inline-flex items-center gap-1.5 px-3.5 py-2 bg-teal-800 hover:bg-teal-900 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{isUploadingGalleryPhoto ? 'Memproses...' : 'Unggah Foto dari HP / Komputer'}</span>
+                    <input type="file" accept="image/*" onChange={handleGalleryPhotoFileUpload} disabled={isUploadingGalleryPhoto} className="hidden" />
+                  </label>
                 </div>
               </div>
 
