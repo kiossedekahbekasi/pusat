@@ -46,7 +46,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateTab, storeInfo, siteSe
   const orderedVisibleItems = (siteSettings.navOrder || []).filter((item) => item.visible);
 
   return (
-    <footer className="bg-neutral-900 text-neutral-300 mt-16 border-t border-neutral-800">
+    <footer className="w-full bg-neutral-900 text-neutral-300 mt-16 border-t border-neutral-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Col 1: Brand Profile */}
