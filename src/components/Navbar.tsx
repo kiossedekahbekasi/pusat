@@ -34,7 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   customPages = [],
 }) => {
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-neutral-200 shadow-2xs">
+    <header className="w-full sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-neutral-200 shadow-2xs">
       {/* Top Announcement Bar */}
       <div className="bg-emerald-800 text-emerald-50 text-xs py-1.5 px-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-1 text-center sm:text-left">
