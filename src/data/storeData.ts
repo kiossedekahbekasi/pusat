@@ -217,6 +217,7 @@ export const STORE_INFO: StoreInfo = {
   whatsapp: '6281234567890',
   operatingHours: 'Setiap Hari (Senin - Minggu): 06:00 - 21:00 WIB',
   deliveryRange: 'Pengiriman langsung (Lokal Toko / Kurir) radius hingga 15 Km & Pengiriman instan',
+  storeStatus: 'buka',
   advantages: [
     {
       title: 'Harga Bersahabat (Ecer & Grosir)',

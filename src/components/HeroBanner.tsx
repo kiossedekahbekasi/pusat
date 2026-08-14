@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Truck, ShieldCheck, Tag, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
 import { StoreInfo, SiteSettings } from '../types';
 
@@ -19,6 +19,26 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   storeInfo,
   siteSettings,
 }) => {
+  const [currentTime, setCurrentTime] = useState('');
+
+  useEffect(() => {
+    const updateClock = () => {
+      const timeStr = new Intl.DateTimeFormat('id-ID', {
+        timeZone: 'Asia/Jakarta',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }).format(new Date());
+      setCurrentTime(timeStr);
+    };
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isOpen = storeInfo.storeStatus !== 'tutup';
+
   return (
     <div className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white rounded-3xl p-6 sm:p-10 shadow-lg overflow-hidden my-6">
       {/* Dynamic background hero image or overlay */}
@@ -98,9 +118,23 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             <div className="flex items-center gap-2 font-bold text-amber-300 text-sm">
               <Clock className="w-4 h-4" /> Jam Operasional Toko
             </div>
-            <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-500/30 font-semibold">
-              BUKA
+            <span
+              className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${
+                isOpen
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                  : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+              }`}
+            >
+              {isOpen ? 'BUKA' : 'TUTUP'}
             </span>
+          </div>
+
+          <div className="flex items-center gap-2 -mt-1">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+            <span className="font-mono text-lg sm:text-xl font-bold text-white tracking-widest tabular-nums">
+              {currentTime || '--:--:--'}
+            </span>
+            <span className="text-[11px] text-emerald-300 font-semibold">WIB</span>
           </div>
           
           <div className="text-sm space-y-2 text-emerald-100">

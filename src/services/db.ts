@@ -322,7 +322,7 @@ export const db = {
         localStorage.setItem(KEYS.STORE_INFO, JSON.stringify(STORE_INFO));
         return STORE_INFO;
       }
-      return JSON.parse(data);
+      return { ...STORE_INFO, ...JSON.parse(data) };
     } catch {
       return STORE_INFO;
     }

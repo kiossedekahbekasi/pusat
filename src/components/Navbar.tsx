@@ -40,7 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-1 text-center sm:text-left">
           <div className="flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="font-medium">TOKO BUKA: {storeInfo.operatingHours}</span>
+            <span className="font-medium">TOKO {storeInfo.storeStatus === 'tutup' ? 'TUTUP' : 'BUKA'}: {storeInfo.operatingHours}</span>
             <span className="hidden md:inline">| Siap kirim area lokal & instan</span>
           </div>
           <div className="flex items-center gap-4 text-[11px] opacity-90">

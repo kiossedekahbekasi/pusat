@@ -31,6 +31,7 @@ export interface StoreInfo {
   whatsapp: string;
   operatingHours: string;
   deliveryRange: string;
+  storeStatus: 'buka' | 'tutup';
   advantages: {
     title: string;
     desc: string;

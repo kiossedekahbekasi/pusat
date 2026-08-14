@@ -1065,6 +1065,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [infoPhone, setInfoPhone] = useState(storeInfo.phone);
   const [infoWa, setInfoWa] = useState(storeInfo.whatsapp);
   const [infoHours, setInfoHours] = useState(storeInfo.operatingHours);
+  const [infoStoreStatus, setInfoStoreStatus] = useState<'buka' | 'tutup'>(storeInfo.storeStatus || 'buka');
 
   const handleSaveStoreInfoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1078,6 +1079,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       phone: infoPhone,
       whatsapp: infoWa,
       operatingHours: infoHours,
+      storeStatus: infoStoreStatus,
     });
     showToast('Informasi Profil Toko berhasil diperbarui ke database!');
   };
@@ -3660,6 +3662,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-neutral-700 mb-2">Status Toko Saat Ini (badge di halaman depan)</label>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setInfoStoreStatus('buka')}
+                  className={`flex-1 px-4 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 border-2 transition-all cursor-pointer ${
+                    infoStoreStatus === 'buka'
+                      ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
+                      : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-300"></span> BUKA
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInfoStoreStatus('tutup')}
+                  className={`flex-1 px-4 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 border-2 transition-all cursor-pointer ${
+                    infoStoreStatus === 'tutup'
+                      ? 'bg-rose-600 text-white border-rose-700 shadow-xs'
+                      : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-rose-300"></span> TUTUP
+                </button>
+              </div>
+              <p className="text-[11px] text-neutral-400 mt-1.5">Pilih "TUTUP" untuk menampilkan badge merah saat toko sedang libur/tutup sementara di luar jam operasional normal.</p>
             </div>
 
             <button
