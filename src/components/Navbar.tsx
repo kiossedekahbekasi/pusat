@@ -170,7 +170,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Navigation Tabs */}
-        <nav className="flex items-center gap-2 mt-3 pt-2 border-t border-neutral-100 overflow-x-auto no-scrollbar text-sm">
+        <nav className="flex flex-wrap items-center gap-2 mt-3 pt-2 border-t border-neutral-100 text-sm">
           {(siteSettings.navOrder || []).filter((item) => item.visible).map((item) => {
             if (item.key === 'catalog') {
               return (
