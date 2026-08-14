@@ -271,7 +271,7 @@ export default function App() {
               <div id="catalog-grid" className="space-y-4 pt-2">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200 pb-4">
                   {/* Category Pills */}
-                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                  <div className="flex flex-wrap items-center gap-2 py-1">
                     {categories.map((cat) => (
                       <button
                         key={cat.id}
