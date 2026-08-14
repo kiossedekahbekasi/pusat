@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TahfidzProfile, Santri, KegiatanSantri } from '../types';
-import { BookOpen, Award, Users, Calendar, MapPin, Phone, MessageSquare, CheckCircle2, Search, Filter, Sparkles, Heart, GraduationCap, X, ChevronRight, User } from 'lucide-react';
+import { BookOpen, Award, Calendar, MapPin, Phone, MessageSquare, Search, Filter, Sparkles, GraduationCap, X, ChevronRight, User } from 'lucide-react';
 
 interface TahfidzSectionProps {
   tahfidzProfile: TahfidzProfile;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, DEFAULT_SITE_SETTINGS } from '../services/db';
+import { db } from '../services/db';
 import { compressImageFile } from '../utils/imageUpload';
 import { 
   AdminUser, 
@@ -41,12 +41,10 @@ import {
   CheckCircle2,
   AlertCircle,
   ShoppingBag,
-  TrendingUp,
   DollarSign,
   Clock,
   Truck,
   Search,
-  Filter,
   Eye,
   X,
   FileText,
@@ -62,7 +60,6 @@ import {
   Calendar,
   Upload,
   UserPlus,
-  Award,
   User,
   HeartHandshake,
   EyeOff,
@@ -147,6 +144,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   // Notification Toast State
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // Peringatan bila data gagal tersimpan ke cloud (dulu hanya muncul di console).
+  const [syncWarning, setSyncWarning] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -161,6 +160,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setKegiatanList(db.getKegiatanList());
       setCustomPages(db.getCustomPages());
       setKiosSedekahProfile(db.getKiosSedekahProfile());
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = db.subscribeSyncStatus((status) => {
+      setSyncWarning(status.ok ? null : status.message);
     });
     return () => unsubscribe();
   }, []);
@@ -246,13 +252,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const totalOmset = orders.reduce((sum, order) => sum + order.totalAmount, 0);
   const pendingOrdersCount = orders.filter((o) => o.status === 'Menunggu Konfirmasi').length;
   const processingOrdersCount = orders.filter((o) => o.status === 'Diproses' || o.status === 'Siap Diantar').length;
-  const completedOrdersCount = orders.filter((o) => o.status === 'Selesai').length;
   const lowStockProducts = products.filter((p) => p.stock < 10);
 
   // ---------------- EXPORT HANDLERS (CSV, PDF, JSON) ----------------
   const handleExportOrdersCSV = () => {
     if (orders.length === 0) {
-      alert('Tidak ada data pesanan untuk diexport.');
+      alert('Tidak ada data pesanan untuk diekspor.');
       return;
     }
     const headers = ['ID Pesanan', 'Tanggal', 'Nama Pembeli', 'No Telepon', 'Alamat', 'Tipe Pengiriman', 'Metode Bayar', 'Total Belanja (Rp)', 'Status', 'Catatan'];
@@ -278,12 +283,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('Laporan Pesanan berhasil diexport ke CSV!');
+    showToast('Laporan Pesanan berhasil diekspor ke CSV!');
   };
 
   const handleExportOrdersPDF = () => {
     if (orders.length === 0) {
-      alert('Tidak ada data pesanan untuk diexport PDF.');
+      alert('Tidak ada data pesanan untuk diekspor PDF.');
       return;
     }
     const printWindow = window.open('', '_blank');
@@ -350,7 +355,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleExportProductsCSV = () => {
     if (products.length === 0) {
-      alert('Tidak ada produk untuk diexport.');
+      alert('Tidak ada produk untuk diekspor.');
       return;
     }
     const headers = ['ID Produk', 'Nama Produk', 'Kategori', 'Harga Eceran (Rp)', 'Harga Grosir (Rp)', 'Satuan', 'Stok Gudang', 'Best Seller'];
@@ -374,12 +379,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('Katalog Produk berhasil diexport ke CSV!');
+    showToast('Katalog Produk berhasil diekspor ke CSV!');
   };
 
   const handleExportProductsPDF = () => {
     if (products.length === 0) {
-      alert('Tidak ada produk untuk diexport PDF.');
+      alert('Tidak ada produk untuk diekspor PDF.');
       return;
     }
     const printWindow = window.open('', '_blank');
@@ -460,7 +465,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('Seluruh Database berhasil diexport ke file JSON!');
+    showToast('Seluruh Database berhasil diekspor ke file JSON!');
   };
 
   // ---------------- TAHFIDZ HANDLERS ----------------
@@ -859,7 +864,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // New Custom Photo Form
   const [newPhotoTitle, setNewPhotoTitle] = useState('');
   const [newPhotoUrl, setNewPhotoUrl] = useState('');
-  const [newPhotoCategory, setNewPhotoCategory] = useState('galeri_toko');
+  const [newPhotoCategory] = useState('galeri_toko');
   const [newPhotoDesc, setNewPhotoDesc] = useState('');
   const [isUploadingGalleryPhoto, setIsUploadingGalleryPhoto] = useState(false);
 
@@ -1167,6 +1172,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         </div>
       )}
 
+      {/* Peringatan sinkronisasi cloud */}
+      {syncWarning && (
+        <div className="bg-amber-50 border border-amber-300 text-amber-900 rounded-2xl px-4 py-3 text-xs font-semibold flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p>{syncWarning}</p>
+            <p className="font-normal mt-1 text-amber-800">
+              Perubahan tetap tersimpan di perangkat ini, tetapi belum tentu terlihat di perangkat lain.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSyncWarning(null)}
+            className="text-amber-700 hover:text-amber-900 cursor-pointer"
+            aria-label="Tutup peringatan"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Admin Top Banner Info */}
       <div className="bg-white rounded-3xl p-6 border border-neutral-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -1219,7 +1245,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <ShoppingBag className="w-4 h-4 text-emerald-400" />
           <span>Kelola Pesanan Masuk ({orders.length})</span>
           {pendingOrdersCount > 0 && (
-            <span className="bg-amber-400 text-neutral-950 font-extrabold text-[10px] px-1.5 py-0.2 rounded-full">
+            <span className="bg-amber-400 text-neutral-950 font-extrabold text-[10px] px-1.5 py-0.5 rounded-full">
               {pendingOrdersCount} Baru
             </span>
           )}
@@ -2338,11 +2364,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1">
                   <label className="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs flex items-center gap-2 cursor-pointer shadow-xs transition-colors">
                     <Upload className="w-4 h-4" />
-                    <span>Upload Logo Foto Baru</span>
+                    <span>{isUploadingTahfidzLogo ? 'Memproses...' : 'Upload Logo Foto Baru'}</span>
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleTahfidzLogoUpload}
+                      disabled={isUploadingTahfidzLogo}
                       className="hidden"
                     />
                   </label>
@@ -2630,8 +2657,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                     <label className="px-3.5 py-2 bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer hover:bg-emerald-900 transition-colors">
                       <Upload className="w-3.5 h-3.5" />
-                      <span>Unggah Foto dari HP / Komputer</span>
-                      <input type="file" accept="image/*" onChange={handleSantriPhotoUpload} className="hidden" />
+                      <span>{isUploadingSantriPhoto ? 'Memproses...' : 'Unggah Foto dari HP / Komputer'}</span>
+                      <input type="file" accept="image/*" onChange={handleSantriPhotoUpload} disabled={isUploadingSantriPhoto} className="hidden" />
                     </label>
                   </div>
                 </div>
@@ -2849,8 +2876,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                     <label className="px-3.5 py-2 bg-emerald-800 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer hover:bg-emerald-900 transition-colors">
                       <Upload className="w-3.5 h-3.5" />
-                      <span>Upload Foto Kegiatan Baru</span>
-                      <input type="file" accept="image/*" onChange={handleKegiatanPhotoUpload} className="hidden" />
+                      <span>{isUploadingKegiatanPhoto ? 'Memproses...' : 'Upload Foto Kegiatan Baru'}</span>
+                      <input type="file" accept="image/*" onChange={handleKegiatanPhotoUpload} disabled={isUploadingKegiatanPhoto} className="hidden" />
                     </label>
                   </div>
                 </div>
@@ -3505,6 +3532,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   }`}
                 >
                   <span className="text-xs">{f.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Font Size Selection
+              Fitur ini sudah didukung mesin tema (utils/theme.ts) dan handler-nya
+              sudah ada, tetapi tombol pengaturannya belum pernah dibuat.
+              Sekarang admin bisa mengubah ukuran huruf website. */}
+          <div className="space-y-3 pt-4 border-t border-neutral-100">
+            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-700">Pilih Ukuran Huruf Website:</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { id: 'sm', label: 'Kecil' },
+                { id: 'md', label: 'Normal' },
+                { id: 'lg', label: 'Besar' },
+                { id: 'xl', label: 'Sangat Besar' },
+              ].map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => handleFontSizeChange(s.id as FontSizeScale)}
+                  className={`p-3 rounded-2xl border text-center transition-all cursor-pointer ${
+                    siteSettings.fontSize === s.id
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-900 font-extrabold ring-2 ring-emerald-500/20'
+                      : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300'
+                  }`}
+                >
+                  <span className="text-xs">{s.label}</span>
                 </button>
               ))}
             </div>

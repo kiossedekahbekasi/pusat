@@ -4,13 +4,9 @@ import {
   MapPin, 
   Clock, 
   Phone, 
-  ShieldCheck, 
   Truck, 
-  Tag, 
-  CheckCircle2, 
   ChevronDown, 
   HeartHandshake, 
-  Award, 
   Scale, 
   BadgePercent,
   MessageSquare,
@@ -29,7 +25,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ storeInfo, photos, s
 
   const sembako9List = [
     { title: 'Beras & Biji-bijian', desc: 'Beras Pandan Wangi, Ramos, Setra Ramos & Beras Merah berkualitas.' },
-    { title: 'Gula Pasir & Pemani', desc: 'Gula kristal putih murni dari tebu alami berkualitas.' },
+    { title: 'Gula Pasir & Pemanis', desc: 'Gula kristal putih murni dari tebu alami berkualitas.' },
     { title: 'Minyak Goreng & Margarin', desc: 'Minyak kelapa sawit bening pouch 1L & 2L serta mentega serbaguna.' },
     { title: 'Daging, Ayam & Ikan', desc: 'Olahan protein segar harian dari peternak lokal terpercaya.' },
     { title: 'Telur Ayam Negeri', desc: 'Telur ayam cangkang cokelat segar dipasok setiap pagi hari.' },
@@ -54,7 +50,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ storeInfo, photos, s
           </h1>
 
           <p className="text-emerald-100 text-base sm:text-lg leading-relaxed">
-            Berdiri sejak tahun {storeInfo.established}, {storeInfo.name} berkomitmen menjadi mitra terpercaya keluarga dan pelaku usaha mikro dalam menyediakan sembilan bahan pokok harian berstandar mutlak dengan harga grosir dan eceran yang jujur.
+            Berdiri sejak tahun {storeInfo.established}, {storeInfo.name} berkomitmen menjadi mitra terpercaya keluarga dan pelaku usaha mikro dalam menyediakan sembilan bahan pokok harian berstandar mutu terbaik dengan harga grosir dan eceran yang jujur.
           </p>
 
           {storeInfo.description && (

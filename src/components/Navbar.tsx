@@ -44,7 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="hidden md:inline">| Siap kirim area lokal & instan</span>
           </div>
           <div className="flex items-center gap-4 text-[11px] opacity-90">
-            <span>Gratis Ongkir &lt; 3 Km (Min. Rp 100rb)</span>
+            <span>Gratis Ongkir Radius &lt; 3 Km (Min. Belanja Rp 100rb)</span>
             <a 
               href={`https://wa.me/${storeInfo.whatsapp}?text=Halo%20${encodeURIComponent(storeInfo.name)}`}
               target="_blank" 
@@ -133,7 +133,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Aktifkan mode grosir untuk melihat potongan harga per dus / sak"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>{isWholesaleMode ? 'Mode Grosir Active' : 'Harga Eceran'}</span>
+              <span>{isWholesaleMode ? 'Mode Grosir Aktif' : 'Harga Eceran'}</span>
             </button>
 
             {/* Cart Button */}

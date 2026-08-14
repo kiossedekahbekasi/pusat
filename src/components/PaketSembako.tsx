@@ -1,5 +1,5 @@
 import React from 'react';
-import { Gift, Sparkles, Check, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Gift, Sparkles, ShoppingBag } from 'lucide-react';
 import { Product } from '../types';
 
 interface PaketSembakoProps {
@@ -38,6 +38,16 @@ export const PaketSembako: React.FC<PaketSembakoProps> = ({
         </p>
       </div>
 
+      {paketProducts.length === 0 && (
+        <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-neutral-300">
+          <Sparkles className="w-8 h-8 text-amber-500 mx-auto mb-3" />
+          <p className="font-bold text-neutral-800">Belum ada paket hemat</p>
+          <p className="text-xs text-neutral-500 mt-1">
+            Paket promo akan muncul di sini setelah ditambahkan lewat Panel Admin.
+          </p>
+        </div>
+      )}
+
       {/* Grid of Packages */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {paketProducts.map((paket) => {
@@ -45,7 +55,8 @@ export const PaketSembako: React.FC<PaketSembakoProps> = ({
           return (
             <div
               key={paket.id}
-              className="bg-white rounded-3xl border border-neutral-200 hover:border-amber-400 p-6 shadow-2xs space-y-4 flex flex-col justify-between transition-all group"
+              onClick={() => onOpenDetail(paket)}
+              className="bg-white rounded-3xl border border-neutral-200 hover:border-amber-400 p-6 shadow-2xs space-y-4 flex flex-col justify-between transition-all group cursor-pointer"
             >
               <div className="space-y-4">
                 <div className="relative aspect-16/9 rounded-2xl bg-neutral-100 overflow-hidden">
@@ -90,7 +101,11 @@ export const PaketSembako: React.FC<PaketSembakoProps> = ({
                 </div>
 
                 <button
-                  onClick={() => onAddToCart(paket, 1, 'eceran')}
+                  onClick={(e) => {
+                    // Cegah klik tombol ikut membuka modal detail paket.
+                    e.stopPropagation();
+                    onAddToCart(paket, 1, 'eceran');
+                  }}
                   className="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold text-xs transition-colors shadow-xs flex items-center gap-2 cursor-pointer"
                 >
                   <ShoppingBag className="w-4 h-4" />

@@ -1,15 +1,19 @@
 import React from 'react';
-import { CheckCircle2, X, PhoneCall, Copy, Printer, ShoppingBag } from 'lucide-react';
-import { OrderDetails } from '../types';
-import { STORE_INFO } from '../data/storeData';
+import { CheckCircle2, X, PhoneCall, Copy, Printer } from 'lucide-react';
+import { OrderDetails, StoreInfo } from '../types';
 
 interface OrderReceiptModalProps {
   order: OrderDetails | null;
   onClose: () => void;
+  storeInfo: StoreInfo;
 }
 
-export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({ order, onClose }) => {
+export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({ order, onClose, storeInfo }) => {
   if (!order) return null;
+
+  // Nomor WhatsApp diambil dari pengaturan toko (bisa diubah admin),
+  // bukan lagi dari data statis. Karakter non-angka dibuang agar link wa.me valid.
+  const whatsappNumber = (storeInfo.whatsapp || '').replace(/\D/g, '');
 
   const formatRupiah = (num: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -32,14 +36,30 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({ order, onC
     return encodeURIComponent(text);
   };
 
-  const handleCopyReceipt = () => {
-    const text = `Nota Pesanan Sembako: ${order.id}\nNama: ${order.customerName}\nTotal: ${formatRupiah(order.totalAmount)}`;
-    navigator.clipboard.writeText(text);
-    alert('Informasi Nota Pesanan berhasil disalin!');
+  const handleCopyReceipt = async () => {
+    const itemList = order.items
+      .map(
+        (item, idx) =>
+          `${idx + 1}. ${item.product.name} x${item.quantity} ${item.product.unit}`
+      )
+      .join('\n');
+    const text = `Nota Pesanan ${storeInfo.name}\nNo. Nota: ${order.id}\nTanggal: ${order.date}\nNama: ${order.customerName}\nNo. HP: ${order.phone}\nAlamat: ${order.address}\n\n${itemList}\n\nTotal: ${formatRupiah(order.totalAmount)}\nPembayaran: ${order.paymentMethod.toUpperCase()}`;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Informasi Nota Pesanan berhasil disalin!');
+    } catch {
+      alert('Browser memblokir penyalinan otomatis. Silakan salin nota secara manual.');
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
       <div 
         className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-neutral-200"
         onClick={(e) => e.stopPropagation()}
@@ -134,7 +154,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({ order, onC
           {/* Action Buttons */}
           <div className="space-y-2 pt-2">
             <a
-              href={`https://wa.me/${STORE_INFO.whatsapp}?text=${generateWhatsAppMessage()}`}
+              href={`https://wa.me/${whatsappNumber}?text=${generateWhatsAppMessage()}`}
               target="_blank"
               rel="noreferrer"
               className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer text-center"
@@ -153,6 +173,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({ order, onC
               </button>
               <button
                 onClick={() => window.print()}
+                type="button"
                 className="flex-1 py-2.5 px-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" />

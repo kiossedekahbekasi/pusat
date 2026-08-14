@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, ShoppingBag, ShieldCheck, Truck, Check, Sparkles, Tag } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, ShoppingBag, ShieldCheck, Truck, Check, Tag } from 'lucide-react';
 import { Product } from '../types';
 
 interface ProductDetailModalProps {
@@ -15,13 +15,36 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onAddToCart,
   isWholesaleMode,
 }) => {
+  // PENTING: hook dipanggil lebih dulu, `return null` menyusul.
+  // Versi sebelumnya keluar lebih awal sehingga jumlah hook berubah
+  // antar render dan React melempar error saat modal dibuka/ditutup.
+  const [quantity, setQuantity] = useState<number>(1);
+  const [selectedUnitType, setSelectedUnitType] = useState<'eceran' | 'grosir'>('eceran');
+  const [addedAnimation, setAddedAnimation] = useState(false);
+
+  // Setel ulang jumlah & skema harga setiap kali produk yang dibuka berganti.
+  useEffect(() => {
+    if (!product) return;
+    const startAsWholesale = isWholesaleMode && !!product.wholesalePrice;
+    setSelectedUnitType(startAsWholesale ? 'grosir' : 'eceran');
+    setQuantity(startAsWholesale ? product.minWholesaleQty || 5 : 1);
+    setAddedAnimation(false);
+  }, [product, isWholesaleMode]);
+
+  // Tutup modal dengan tombol Esc.
+  useEffect(() => {
+    if (!product) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [product, onClose]);
+
   if (!product) return null;
 
-  const [quantity, setQuantity] = useState<number>(1);
-  const [selectedUnitType, setSelectedUnitType] = useState<'eceran' | 'grosir'>(
-    isWholesaleMode && product.wholesalePrice ? 'grosir' : 'eceran'
-  );
-  const [addedAnimation, setAddedAnimation] = useState(false);
+  const minWholesaleQty = product.minWholesaleQty || 5;
+  const isWholesaleQtyTooLow = selectedUnitType === 'grosir' && quantity < minWholesaleQty;
 
   const formatRupiah = (num: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -39,7 +62,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const totalPrice = activeUnitPrice * quantity;
 
   const handleAdd = () => {
-    onAddToCart(product, quantity, selectedUnitType);
+    // Harga grosir hanya berlaku mulai dari jumlah minimalnya.
+    const finalQuantity =
+      selectedUnitType === 'grosir' ? Math.max(quantity, minWholesaleQty) : quantity;
+    onAddToCart(product, finalQuantity, selectedUnitType);
     setAddedAnimation(true);
     setTimeout(() => {
       setAddedAnimation(false);
@@ -48,7 +74,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
       <div 
         className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-neutral-200"
         onClick={(e) => e.stopPropagation()}
@@ -57,7 +88,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-md px-6 py-4 border-b border-neutral-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-              {product.category.replace('_', ' ')}
+              {product.category.replace(/_/g, ' ')}
             </span>
           </div>
           <button
@@ -136,7 +167,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
                     <button
                       type="button"
-                      onClick={() => setSelectedUnitType('grosir')}
+                      onClick={() => {
+                        setSelectedUnitType('grosir');
+                        setQuantity((q) => Math.max(q, minWholesaleQty));
+                      }}
                       className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                         selectedUnitType === 'grosir'
                           ? 'border-amber-600 bg-amber-50/50 text-amber-950 ring-2 ring-amber-500/20'
@@ -172,7 +206,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <div className="flex items-center border border-neutral-300 rounded-xl bg-neutral-50 p-1">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-8 h-8 flex items-center justify-center font-bold text-neutral-700 hover:bg-neutral-200 rounded-lg transition-colors"
+                    aria-label="Kurangi jumlah"
+                    className="w-8 h-8 flex items-center justify-center font-bold text-neutral-700 hover:bg-neutral-200 rounded-lg transition-colors cursor-pointer"
                   >
                     -
                   </button>
@@ -181,12 +216,20 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   </span>
                   <button
                     onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                    className="w-8 h-8 flex items-center justify-center font-bold text-neutral-700 hover:bg-neutral-200 rounded-lg transition-colors"
+                    aria-label="Tambah jumlah"
+                    className="w-8 h-8 flex items-center justify-center font-bold text-neutral-700 hover:bg-neutral-200 rounded-lg transition-colors cursor-pointer"
                   >
                     +
                   </button>
                 </div>
               </div>
+
+              {isWholesaleQtyTooLow && (
+                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  Harga grosir berlaku mulai {minWholesaleQty} unit. Jumlah akan otomatis
+                  disesuaikan menjadi {minWholesaleQty} saat dimasukkan ke keranjang.
+                </p>
+              )}
 
               <button
                 onClick={handleAdd}

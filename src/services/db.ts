@@ -2,7 +2,7 @@ import { Product, StoreInfo, SiteSettings, CustomPhoto, AdminUser, OrderDetails,
 import { INITIAL_PRODUCTS, STORE_INFO } from '../data/storeData';
 import { DEFAULT_TAHFIDZ_PROFILE, DEFAULT_SANTRI_LIST, DEFAULT_KEGIATAN_LIST } from '../data/tahfidzData';
 import { DEFAULT_KIOS_SEDEKAH_PROFILE } from '../data/kiosSedekahData';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { firestore, auth } from '../lib/firebase';
 
@@ -20,33 +20,74 @@ const KEYS = {
   KIOS_SEDEKAH: 'tsbu_db_kios_sedekah_v1',
 };
 
+/**
+ * Status sinkronisasi cloud terakhir.
+ * Sebelumnya kegagalan simpan ke Firestore hanya di-console.warn, sehingga admin
+ * merasa datanya sudah tersimpan padahal hanya tersimpan di perangkatnya sendiri.
+ */
+export type SyncStatus = { ok: boolean; docName: string; message: string; at: string };
+let lastSyncStatus: SyncStatus | null = null;
+const syncListeners = new Set<(s: SyncStatus) => void>();
+
+const emitSyncStatus = (status: SyncStatus) => {
+  lastSyncStatus = status;
+  syncListeners.forEach((fn) => fn(status));
+};
+
 // Helper to sync to Firestore in background
 const saveToFirestore = async (docName: string, data: any) => {
   try {
     const docRef = doc(firestore, 'store_data', docName);
     await setDoc(docRef, { data, updatedAt: new Date().toISOString() }, { merge: true });
-  } catch (err) {
-    console.warn(`Firestore sync skipped for ${docName}:`, err);
+    emitSyncStatus({ ok: true, docName, message: 'Data tersimpan ke cloud.', at: new Date().toISOString() });
+  } catch (err: any) {
+    const raw = String(err?.code || err?.message || err);
+    // Pesan yang bisa dimengerti pengurus toko, bukan kode teknis Firebase.
+    let message = `Gagal menyimpan "${docName}" ke cloud. Data masih aman di perangkat ini.`;
+    if (raw.includes('permission-denied')) {
+      message = `Gagal menyimpan "${docName}" ke cloud: izin ditolak. Pastikan Anda sudah login sebagai admin.`;
+    } else if (raw.includes('unavailable') || raw.includes('offline')) {
+      message = `Gagal menyimpan "${docName}" ke cloud: koneksi internet terputus. Data tersimpan di perangkat ini dulu.`;
+    } else if (raw.includes('invalid-argument') || raw.includes('exceeds the maximum')) {
+      message = `Gagal menyimpan "${docName}": ukuran data terlalu besar (batas 1 MB per dokumen). Kurangi jumlah/ukuran foto.`;
+    }
+    console.warn(`Firestore sync failed for ${docName}:`, err);
+    emitSyncStatus({ ok: false, docName, message, at: new Date().toISOString() });
   }
 };
 
-// Initial sync to ensure collections are populated in Firestore
+/**
+ * Mengisi Firestore HANYA jika dokumennya belum ada.
+ * Versi sebelumnya menimpa semua dokumen cloud dengan salinan localStorage
+ * setiap kali halaman dibuka — berisiko menimpa data terbaru dengan data lama.
+ */
+const seedFirestoreIfMissing = async (docName: string, fallback: unknown, storageKey?: string) => {
+  try {
+    const docRef = doc(firestore, 'store_data', docName);
+    const snapshot = await getDoc(docRef);
+    if (snapshot.exists()) return;
+
+    const local = storageKey ? localStorage.getItem(storageKey) : null;
+    const data = local ? JSON.parse(local) : fallback;
+    await setDoc(docRef, { data, updatedAt: new Date().toISOString() }, { merge: true });
+  } catch (err) {
+    // Kegagalan di sini normal untuk pengunjung biasa (tidak punya izin tulis).
+    console.warn(`Firestore seed skipped for ${docName}:`, err);
+  }
+};
+
 if (typeof window !== 'undefined') {
   setTimeout(() => {
-    try {
-      saveToFirestore('products', JSON.parse(localStorage.getItem(KEYS.PRODUCTS) || JSON.stringify(INITIAL_PRODUCTS)));
-      saveToFirestore('storeInfo', JSON.parse(localStorage.getItem(KEYS.STORE_INFO) || JSON.stringify(STORE_INFO)));
-      saveToFirestore('settings', JSON.parse(localStorage.getItem(KEYS.SETTINGS) || JSON.stringify(DEFAULT_SITE_SETTINGS)));
-      saveToFirestore('photos', JSON.parse(localStorage.getItem(KEYS.PHOTOS) || JSON.stringify(DEFAULT_PHOTOS)));
-      saveToFirestore('orders', JSON.parse(localStorage.getItem(KEYS.ORDERS) || JSON.stringify(DEFAULT_ORDERS)));
-      saveToFirestore('tahfidzProfile', JSON.parse(localStorage.getItem(KEYS.TAHFIDZ_PROFILE) || JSON.stringify(DEFAULT_TAHFIDZ_PROFILE)));
-      saveToFirestore('santri', JSON.parse(localStorage.getItem(KEYS.SANTRI) || JSON.stringify(DEFAULT_SANTRI_LIST)));
-      saveToFirestore('kegiatan', JSON.parse(localStorage.getItem(KEYS.KEGIATAN) || JSON.stringify(DEFAULT_KEGIATAN_LIST)));
-      saveToFirestore('customPages', JSON.parse(localStorage.getItem(KEYS.CUSTOM_PAGES) || '[]'));
-      saveToFirestore('kiosSedekah', JSON.parse(localStorage.getItem(KEYS.KIOS_SEDEKAH) || JSON.stringify(DEFAULT_KIOS_SEDEKAH_PROFILE)));
-    } catch (e) {
-      console.warn('Initial Firestore sync error:', e);
-    }
+    seedFirestoreIfMissing('products', INITIAL_PRODUCTS, KEYS.PRODUCTS);
+    seedFirestoreIfMissing('storeInfo', STORE_INFO, KEYS.STORE_INFO);
+    seedFirestoreIfMissing('settings', DEFAULT_SITE_SETTINGS, KEYS.SETTINGS);
+    seedFirestoreIfMissing('photos', DEFAULT_PHOTOS, KEYS.PHOTOS);
+    seedFirestoreIfMissing('orders', DEFAULT_ORDERS, KEYS.ORDERS);
+    seedFirestoreIfMissing('tahfidzProfile', DEFAULT_TAHFIDZ_PROFILE, KEYS.TAHFIDZ_PROFILE);
+    seedFirestoreIfMissing('santri', DEFAULT_SANTRI_LIST, KEYS.SANTRI);
+    seedFirestoreIfMissing('kegiatan', DEFAULT_KEGIATAN_LIST, KEYS.KEGIATAN);
+    seedFirestoreIfMissing('customPages', [], KEYS.CUSTOM_PAGES);
+    seedFirestoreIfMissing('kiosSedekah', DEFAULT_KIOS_SEDEKAH_PROFILE, KEYS.KIOS_SEDEKAH);
   }, 1000);
 }
 
@@ -93,7 +134,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     commodities: [
       'Beras Pandan Wangi & Ramos',
       'Minyak Goreng Pouch 1L & 2L',
-      'Gula Pasir & Pemani Murni',
+      'Gula Pasir & Pemanis Murni',
       'Telur Ayam Negeri Segar',
       'Tepung Terigu & Tapioka',
       'Mie Instan Dus & Eceran',
@@ -114,7 +155,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
 export const DEFAULT_PHOTOS: CustomPhoto[] = [
   {
     id: 'photo-1',
-    title: 'Gudang Stok Berkas & Minyak',
+    title: 'Gudang Stok Beras & Minyak',
     url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=800',
     category: 'galeri_toko',
     description: 'Stok beras segar langsung dari penggilingan padi terpercaya.',
@@ -185,7 +226,7 @@ export const DEFAULT_ORDERS: OrderDetails[] = [
     totalAmount: 1020000,
     date: '9 Agustus 2026, 11:15',
     status: 'Diproses',
-    notes: 'Nota di lampirkan cap toko untuk laporan pembukuan.',
+    notes: 'Nota dilampirkan cap toko untuk laporan pembukuan.',
   },
   {
     id: 'SBK-319082',
@@ -700,5 +741,12 @@ export const db = {
       window.removeEventListener('tsbu-db-updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
     };
+  },
+
+  /** Pantau keberhasilan/kegagalan sinkronisasi data ke cloud. */
+  subscribeSyncStatus(callback: (status: SyncStatus) => void): () => void {
+    syncListeners.add(callback);
+    if (lastSyncStatus) callback(lastSyncStatus);
+    return () => syncListeners.delete(callback);
   },
 };

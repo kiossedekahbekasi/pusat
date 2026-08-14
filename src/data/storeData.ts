@@ -91,7 +91,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     unit: 'Bungkus 1kg',
     stock: 95,
     image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=600',
-    description: 'Tepung terigu protein sedang serbaguna, cocok untuk aneka aneka martabak, kue, dan gorengan.',
+    description: 'Tepung terigu protein sedang serbaguna, cocok untuk aneka martabak, kue, dan gorengan.',
   },
   {
     id: 'p8',
@@ -115,7 +115,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     unit: 'Karton / Dus',
     stock: 40,
     image: 'https://images.unsplash.com/photo-1612927601601-6638404737ce?auto=format&fit=crop&q=80&w=600',
-    description: 'Mie instant favorit Indonesia rasa goreng spesial legendaris, stok hemat untuk keluarga.',
+    description: 'Mie instan favorit Indonesia rasa goreng spesial legendaris, stok hemat untuk keluarga.',
     isBestSeller: true,
     badge: 'Harga Dusan'
   },
@@ -145,7 +145,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'p12',
-    name: 'Teh Celup Sosri Box isi 30 Kantong',
+    name: 'Teh Celup Sosro Box isi 30 Kantong',
     category: 'susu_minuman',
     price: 7500,
     wholesalePrice: 6800,
@@ -225,7 +225,7 @@ export const STORE_INFO: StoreInfo = {
       icon: 'Tag'
     },
     {
-      title: 'Jaminan Quality & 100% Asli',
+      title: 'Jaminan Kualitas & 100% Asli',
       desc: 'Beras pulen tanpa pemutih/pewangi buatan, telur segar harian, dan barang bermerek segel resmi.',
       icon: 'ShieldCheck'
     },
@@ -255,7 +255,7 @@ export const STORE_INFO: StoreInfo = {
     },
     {
       question: 'Berapa biaya pengiriman dan berapa lama pengantarannya?',
-      answer: 'Untuk radius < 3 Km dari toko kami memberikan GRATIS ONGKIR dengan minimal belanja Rp 100.000. Pengiriman dilakukan oleh kurir internal toko dalam waktu 1-3 jam setelah konfirmasi.'
+      answer: 'Untuk radius < 3 Km dari toko kami memberikan GRATIS ONGKIR dengan minimal belanja Rp 100.000. Di bawah Rp 100.000 dikenakan ongkos kurir Rp 10.000, dan untuk jarak di luar radius 3 Km ongkos kirim dikonfirmasi petugas via WhatsApp. Pengiriman dilakukan oleh kurir internal toko dalam waktu 1-3 jam setelah konfirmasi.'
     },
     {
       question: 'Apakah melayani pemesanan paket sembako untuk acara / bansos / sedekah?',

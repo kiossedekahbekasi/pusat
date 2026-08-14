@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Check, Info, ShoppingBag, Sparkles } from 'lucide-react';
+import { Check, Info, ShoppingBag, Sparkles } from 'lucide-react';
 import { Product } from '../types';
 
 interface ProductCardProps {
@@ -32,7 +32,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onAddToCart(product, quantity, isWholesaleMode ? 'grosir' : 'eceran');
+    // Mode grosir hanya sah bila produk punya harga grosir DAN jumlahnya
+    // memenuhi minimum pembelian grosir.
+    const useWholesale = isWholesaleMode && !!product.wholesalePrice;
+    const minQty = product.minWholesaleQty || 5;
+    const finalQuantity = useWholesale ? Math.max(quantity, minQty) : quantity;
+    onAddToCart(product, finalQuantity, useWholesale ? 'grosir' : 'eceran');
     setAddedAnimation(true);
     setTimeout(() => setAddedAnimation(false), 1200);
   };

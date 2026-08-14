@@ -2,16 +2,38 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Daftar UID admin yang boleh menulis data toko.
+    // CARA PAKAI (SANGAT DISARANKAN):
+    //   1. Buka Firebase Console > Authentication > Users, salin UID akun admin.
+    //   2. Masukkan UID tersebut ke daftar di bawah ini.
+    //   3. Deploy ulang aturan ini, lalu ganti isAdmin() pada blok write.
+    // Selama daftar masih kosong, aturan memakai pemeriksaan longgar
+    // (siapa pun yang login) supaya aplikasi tetap berjalan.
+    function adminUids() {
+      return [
+        // 'ganti_dengan_UID_admin_anda',
+      ];
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.uid in adminUids();
+    }
+
     // Data toko: siapa saja boleh membaca (untuk ditampilkan di website publik).
-    // Menulis/mengubah/menghapus HANYA boleh oleh admin yang sudah login
-    // lewat Firebase Authentication (email & password asli).
+    // Menulis/mengubah/menghapus hanya boleh oleh akun yang sudah login.
+    // Setelah adminUids() diisi, ganti `isSignedIn()` di bawah menjadi `isAdmin()`
+    // agar akun Firebase lain tidak bisa mengubah data toko.
     match /store_data/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isSignedIn();
 
       match /data/{itemId} {
         allow read: if true;
-        allow write: if request.auth != null;
+        allow write: if isSignedIn();
       }
     }
 

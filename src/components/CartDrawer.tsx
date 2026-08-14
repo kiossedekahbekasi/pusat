@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { X, Trash2, ShoppingBag, Truck, Store, ArrowRight, ShieldCheck, Phone, MapPin, User, CheckCircle2 } from 'lucide-react';
-import { CartItem, OrderDetails } from '../types';
-import { STORE_INFO } from '../data/storeData';
+import React, { useEffect, useState } from 'react';
+import { X, Trash2, ShoppingBag, Truck, Store, ArrowRight, Phone, MapPin, User, CheckCircle2 } from 'lucide-react';
+import { CartItem, OrderDetails, StoreInfo } from '../types';
 
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   cartItems: CartItem[];
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemoveItem: (productId: string) => void;
+  onUpdateQuantity: (productId: string, unitType: 'eceran' | 'grosir', quantity: number) => void;
+  onRemoveItem: (productId: string, unitType: 'eceran' | 'grosir') => void;
   onClearCart: () => void;
   onCompleteOrder: (orderDetails: OrderDetails) => void;
+  storeInfo: StoreInfo;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -21,9 +21,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onRemoveItem,
   onClearCart,
   onCompleteOrder,
+  storeInfo,
 }) => {
-  if (!isOpen) return null;
-
+  // PENTING: semua hook harus dipanggil sebelum `return null`,
+  // kalau tidak React akan error "Rendered fewer hooks than expected".
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -31,6 +32,21 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'qris' | 'transfer'>('cod');
   const [notes, setNotes] = useState('');
   const [step, setStep] = useState<'cart' | 'checkout'>('cart');
+
+  // Kembali ke langkah awal setiap kali panel dibuka lagi.
+  useEffect(() => {
+    if (isOpen) setStep('cart');
+  }, [isOpen]);
+
+  // Tutup panel dengan tombol Esc.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
 
   const formatRupiah = (num: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -48,7 +64,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     return acc + itemUnitPrice * item.quantity;
   }, 0);
 
-  const deliveryFee = deliveryType === 'delivery' ? (subtotal >= 100000 ? 0 : 10000) : 0;
+  // Aturan ongkir (disamakan dengan keterangan di Navbar & FAQ):
+  // gratis untuk radius < 3 km bila belanja minimal Rp 100.000,
+  // di bawah itu dikenakan ongkos kurir Rp 10.000.
+  // Jarak diverifikasi manual oleh petugas toko saat konfirmasi WhatsApp.
+  const FREE_DELIVERY_MIN = 100000;
+  const DELIVERY_FEE = 10000;
+  const deliveryFee =
+    deliveryType === 'delivery' ? (subtotal >= FREE_DELIVERY_MIN ? 0 : DELIVERY_FEE) : 0;
   const grandTotal = subtotal + deliveryFee;
 
   const handleCheckoutSubmit = (e: React.FormEvent) => {
@@ -62,7 +85,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       id: 'SBK-' + Math.floor(100000 + Math.random() * 900000),
       customerName,
       phone,
-      address: deliveryType === 'delivery' ? address : 'Ambil Langsung di Toko Sembako Berkah Utama',
+      address: deliveryType === 'delivery' ? address : `Ambil Langsung di ${storeInfo.name}`,
       deliveryType,
       paymentMethod,
       items: [...cartItems],
@@ -79,10 +102,24 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     };
 
     onCompleteOrder(newOrder);
+
+    // Bersihkan form supaya pesanan berikutnya mulai dari kosong.
+    setCustomerName('');
+    setPhone('');
+    setAddress('');
+    setNotes('');
+    setStep('cart');
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-fade-in"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
       <div 
         className="bg-white w-full max-w-lg h-full flex flex-col justify-between shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -140,7 +177,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
                   return (
                     <div
-                      key={item.product.id}
+                      key={`${item.product.id}-${item.selectedUnitType}`}
                       className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 flex items-center gap-3"
                     >
                       <img
@@ -159,7 +196,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           <span>{formatRupiah(unitPrice)}</span>
                           <span className="text-neutral-400 font-normal">/ {item.product.unit}</span>
                           {item.selectedUnitType === 'grosir' && (
-                            <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.2 rounded">
+                            <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-1.5 py-0.5 rounded">
                               Grosir
                             </span>
                           )}
@@ -169,7 +206,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           {/* Quantity selector */}
                           <div className="flex items-center border border-neutral-300 rounded bg-white p-0.5">
                             <button
-                              onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
+                              onClick={() =>
+                                onUpdateQuantity(item.product.id, item.selectedUnitType, item.quantity - 1)
+                              }
                               className="w-6 h-6 flex items-center justify-center font-bold text-neutral-600 text-xs"
                             >
                               -
@@ -178,7 +217,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                               {item.quantity}
                             </span>
                             <button
-                              onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
+                              onClick={() =>
+                                onUpdateQuantity(item.product.id, item.selectedUnitType, item.quantity + 1)
+                              }
                               className="w-6 h-6 flex items-center justify-center font-bold text-neutral-600 text-xs"
                             >
                               +
@@ -192,8 +233,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       </div>
 
                       <button
-                        onClick={() => onRemoveItem(item.product.id)}
-                        className="text-neutral-400 hover:text-rose-600 p-1 transition-colors"
+                        onClick={() => onRemoveItem(item.product.id, item.selectedUnitType)}
+                        aria-label={`Hapus ${item.product.name} dari keranjang`}
+                        className="text-neutral-400 hover:text-rose-600 p-1 transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { Navbar } from './components/Navbar';
 import { HeroBanner } from './components/HeroBanner';
 import { ProductCard } from './components/ProductCard';
@@ -8,7 +8,6 @@ import { PaketSembako } from './components/PaketSembako';
 import { CartDrawer } from './components/CartDrawer';
 import { OrderReceiptModal } from './components/OrderReceiptModal';
 import { Footer } from './components/Footer';
-import { AdminPanel } from './components/AdminPanel';
 import { TahfidzSection } from './components/TahfidzSection';
 import { KiosSedekahSection } from './components/KiosSedekahSection';
 import { CustomPageView } from './components/CustomPageView';
@@ -17,6 +16,14 @@ import { db } from './services/db';
 import { applyGlobalTheme } from './utils/theme';
 import { Product, CartItem, OrderDetails, StoreInfo, SiteSettings, CustomPhoto, AdminUser, TahfidzProfile, Santri, KegiatanSantri, CustomPage, KiosSedekahProfile } from './types';
 import { SlidersHorizontal, Tag, Info } from 'lucide-react';
+
+// Panel Admin adalah komponen terbesar dan hanya dibutuhkan pengurus toko,
+// jadi dimuat terpisah (lazy) agar halaman pembeli jauh lebih cepat dibuka.
+const AdminPanel = lazy(() =>
+  import('./components/AdminPanel').then((m) => ({ default: m.AdminPanel }))
+);
+
+const CART_STORAGE_KEY = 'tsbu_cart_v1';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('catalog');
@@ -30,7 +37,7 @@ export default function App() {
   const [storeInfo, setStoreInfo] = useState<StoreInfo>(() => db.getStoreInfo());
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => db.getSiteSettings());
   const [photos, setPhotos] = useState<CustomPhoto[]>(() => db.getPhotos());
-  const [adminUser, setAdminUser] = useState<AdminUser>(() => db.getAdminUser());
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(() => db.getAdminUser());
   const [tahfidzProfile, setTahfidzProfile] = useState<TahfidzProfile>(() => db.getTahfidzProfile());
   const [santriList, setSantriList] = useState<Santri[]>(() => db.getSantriList());
   const [kegiatanList, setKegiatanList] = useState<KegiatanSantri[]>(() => db.getKegiatanList());
@@ -38,16 +45,37 @@ export default function App() {
   const [kiosSedekahProfile, setKiosSedekahProfile] = useState<KiosSedekahProfile>(() => db.getKiosSedekahProfile());
 
   // Shopping Cart & Modals State
-  const [cart, setCart] = useState<CartItem[]>([]);
+  // Keranjang ikut disimpan di localStorage supaya tidak hilang saat halaman di-refresh.
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(CART_STORAGE_KEY);
+      return saved ? (JSON.parse(saved) as CartItem[]) : [];
+    } catch {
+      return [];
+    }
+  });
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [selectedProductDetail, setSelectedProductDetail] = useState<Product | null>(null);
   const [completedOrder, setCompletedOrder] = useState<OrderDetails | null>(null);
 
-  // Synchronize state and themes when DB changes
+  // Simpan keranjang setiap kali berubah.
   useEffect(() => {
-    // Initial theme application
-    applyGlobalTheme(siteSettings);
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    } catch {
+      /* localStorage penuh / diblokir: abaikan saja. */
+    }
+  }, [cart]);
 
+  // Terapkan tema setiap kali pengaturan tampilan berubah.
+  useEffect(() => {
+    applyGlobalTheme(siteSettings);
+  }, [siteSettings]);
+
+  // Sinkronkan state saat database berubah.
+  // Catatan: dependency HARUS kosong. Sebelumnya memakai [siteSettings],
+  // sehingga listener dilepas & dipasang ulang setiap kali pengaturan berubah.
+  useEffect(() => {
     const unsubscribe = db.subscribe(() => {
       const updatedProducts = db.getProducts();
       const updatedStoreInfo = db.getStoreInfo();
@@ -70,13 +98,10 @@ export default function App() {
       setKegiatanList(updatedKegiatan);
       setCustomPages(updatedCustomPages);
       setKiosSedekahProfile(updatedKiosSedekahProfile);
-
-      // Re-apply styles live
-      applyGlobalTheme(updatedSiteSettings);
     });
 
     return () => unsubscribe();
-  }, [siteSettings]);
+  }, []);
 
   // Update browser tab title & favicon to match the store's name and logo.
   useEffect(() => {
@@ -107,6 +132,8 @@ export default function App() {
   ];
 
   // Cart Handlers
+  // Satu produk bisa masuk keranjang dua kali (harga eceran & harga grosir),
+  // jadi identitas baris keranjang = id produk + jenis harga.
   const handleAddToCart = (product: Product, quantity: number, unitType: 'eceran' | 'grosir') => {
     setCart((prevCart) => {
       const existingIndex = prevCart.findIndex(
@@ -114,29 +141,39 @@ export default function App() {
       );
 
       if (existingIndex > -1) {
-        const updated = [...prevCart];
-        updated[existingIndex].quantity += quantity;
-        return updated;
-      } else {
-        return [...prevCart, { product, quantity, selectedUnitType: unitType }];
+        // Salin objeknya, jangan diubah langsung (menghindari mutasi state).
+        return prevCart.map((item, idx) =>
+          idx === existingIndex ? { ...item, quantity: item.quantity + quantity } : item
+        );
       }
+      return [...prevCart, { product, quantity, selectedUnitType: unitType }];
     });
   };
 
-  const handleUpdateCartQuantity = (productId: string, quantity: number) => {
+  const handleUpdateCartQuantity = (
+    productId: string,
+    unitType: 'eceran' | 'grosir',
+    quantity: number
+  ) => {
     if (quantity <= 0) {
-      handleRemoveCartItem(productId);
+      handleRemoveCartItem(productId, unitType);
       return;
     }
     setCart((prevCart) =>
       prevCart.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
+        item.product.id === productId && item.selectedUnitType === unitType
+          ? { ...item, quantity }
+          : item
       )
     );
   };
 
-  const handleRemoveCartItem = (productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.product.id !== productId));
+  const handleRemoveCartItem = (productId: string, unitType: 'eceran' | 'grosir') => {
+    setCart((prevCart) =>
+      prevCart.filter(
+        (item) => !(item.product.id === productId && item.selectedUnitType === unitType)
+      )
+    );
   };
 
   const handleClearCart = () => {
@@ -350,13 +387,21 @@ export default function App() {
 
           {/* Admin / Login View */}
           {activeTab === 'admin' && (
-            <AdminPanel
-              adminUser={adminUser}
-              siteSettings={siteSettings}
-              storeInfo={storeInfo}
-              products={products}
-              photos={photos}
-            />
+            <Suspense
+              fallback={
+                <div className="py-24 text-center text-sm font-semibold text-neutral-500">
+                  Memuat Panel Admin...
+                </div>
+              }
+            >
+              <AdminPanel
+                adminUser={adminUser}
+                siteSettings={siteSettings}
+                storeInfo={storeInfo}
+                products={products}
+                photos={photos}
+              />
+            </Suspense>
           )}
 
           {/* Custom Page View (halaman tambahan buatan admin) */}
@@ -382,11 +427,13 @@ export default function App() {
         onRemoveItem={handleRemoveCartItem}
         onClearCart={handleClearCart}
         onCompleteOrder={handleCompleteOrder}
+        storeInfo={storeInfo}
       />
 
       <OrderReceiptModal
         order={completedOrder}
         onClose={() => setCompletedOrder(null)}
+        storeInfo={storeInfo}
       />
 
       {/* Footer */}
