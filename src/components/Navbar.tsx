@@ -63,9 +63,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Logo & Brand */}
           <div
             onClick={() => setActiveTab('catalog')}
-            className="flex items-center gap-3 cursor-pointer select-none shrink-0"
+            className="flex items-center gap-3 cursor-pointer select-none min-w-0"
           >
-            <div className="flex items-center -space-x-3">
+            <div className="flex items-center -space-x-3 shrink-0">
               {siteSettings.storeLogoImage ? (
                 <img
                   src={siteSettings.storeLogoImage}
@@ -85,8 +85,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 />
               )}
             </div>
-            <div>
-              <h1 className="font-bold text-lg text-neutral-900 leading-tight tracking-tight flex items-center gap-1.5">
+            <div className="min-w-0">
+              <h1 className="font-bold text-base sm:text-lg text-neutral-900 leading-tight tracking-tight line-clamp-2 sm:line-clamp-1 break-words">
                 {storeInfo.name}
               </h1>
               <p className="text-xs text-emerald-700 font-medium hidden sm:block">
@@ -121,7 +121,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Right Actions: Wholesale Toggle & Cart */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {/* Mode Grosir Switch */}
             <button
               onClick={() => setIsWholesaleMode(!isWholesaleMode)}
