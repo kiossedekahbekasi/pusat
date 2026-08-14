@@ -337,7 +337,7 @@ export default function App() {
           )}
 
           {/* About Section View */}
-          {activeTab === 'about' && <AboutSection storeInfo={storeInfo} photos={photos} />}
+          {activeTab === 'about' && <AboutSection storeInfo={storeInfo} photos={photos} siteSettings={siteSettings} />}
 
           {/* Packages View */}
           {activeTab === 'packages' && (
@@ -390,7 +390,7 @@ export default function App() {
       />
 
       {/* Footer */}
-      <Footer onNavigateTab={setActiveTab} storeInfo={storeInfo} />
+      <Footer onNavigateTab={setActiveTab} storeInfo={storeInfo} siteSettings={siteSettings} customPages={customPages} />
     </div>
   );
 }

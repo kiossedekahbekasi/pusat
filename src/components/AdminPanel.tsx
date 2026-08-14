@@ -17,7 +17,11 @@ import {
   CustomPage,
   NavLabels,
   KiosSedekahProfile,
-  KiosSedekahPhoto
+  KiosSedekahPhoto,
+  NavItemConfig,
+  HeroContent,
+  FooterContent,
+  AboutPageContent
 } from '../types';
 import { 
   Lock, 
@@ -60,7 +64,11 @@ import {
   UserPlus,
   Award,
   User,
-  HeartHandshake
+  HeartHandshake,
+  EyeOff,
+  GripVertical,
+  SlidersHorizontal,
+  Info
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -84,7 +92,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [loginError, setLoginError] = useState<string>('');
 
   // Admin Sub-Tab
-  const [adminTab, setAdminTab] = useState<'overview' | 'orders' | 'products' | 'photos' | 'tahfidz_profile' | 'tahfidz_santri' | 'tahfidz_kegiatan' | 'kios_sedekah' | 'styling' | 'store_info' | 'pages' | 'database'>('overview');
+  const [adminTab, setAdminTab] = useState<'overview' | 'orders' | 'products' | 'photos' | 'page_content' | 'tahfidz_profile' | 'tahfidz_santri' | 'tahfidz_kegiatan' | 'kios_sedekah' | 'styling' | 'store_info' | 'pages' | 'database'>('overview');
 
   // Orders State
   const [orders, setOrders] = useState<OrderDetails[]>(() => db.getOrders());
@@ -774,6 +782,67 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     showToast('Nama menu navbar berhasil disimpan ke seluruh website!');
   };
 
+  // ---------------- NAVBAR ORDER & VISIBILITY HANDLERS ----------------
+  const NAV_ITEM_LABELS: Record<string, string> = {
+    catalog: 'Katalog Sembako',
+    tahfidz: 'Rumah Tahfidz',
+    about: 'Tentang Toko',
+    kios_sedekah: 'Kios Sedekah',
+    packages: 'Paket Hemat & Promo',
+  };
+  const [navOrderInput, setNavOrderInput] = useState<NavItemConfig[]>(siteSettings.navOrder);
+  const [draggedNavIndex, setDraggedNavIndex] = useState<number | null>(null);
+
+  const handleDropNavItem = (targetIndex: number) => {
+    if (draggedNavIndex === null || draggedNavIndex === targetIndex) return;
+    const updated = [...navOrderInput];
+    const [moved] = updated.splice(draggedNavIndex, 1);
+    updated.splice(targetIndex, 0, moved);
+    setNavOrderInput(updated);
+    setDraggedNavIndex(null);
+  };
+
+  const handleToggleNavVisible = (index: number) => {
+    const updated = navOrderInput.map((item, i) => (i === index ? { ...item, visible: !item.visible } : item));
+    setNavOrderInput(updated);
+  };
+
+  const handleSaveNavOrder = () => {
+    db.saveSiteSettings({ navOrder: navOrderInput });
+    showToast('Urutan & visibilitas menu navbar berhasil disimpan!');
+  };
+
+  // ---------------- PAGE CONTENT HANDLERS (Hero / Footer / About) ----------------
+  const [heroContentInput, setHeroContentInput] = useState<HeroContent>(siteSettings.heroContent);
+  const handleSaveHeroContent = (e: React.FormEvent) => {
+    e.preventDefault();
+    db.saveSiteSettings({ heroContent: heroContentInput });
+    showToast('Konten halaman depan (Katalog Sembako) berhasil disimpan!');
+  };
+
+  const [footerContentInput, setFooterContentInput] = useState<FooterContent>(siteSettings.footerContent);
+  const [newCommodityInput, setNewCommodityInput] = useState('');
+  const handleAddCommodity = () => {
+    if (!newCommodityInput.trim()) return;
+    setFooterContentInput((prev) => ({ ...prev, commodities: [...prev.commodities, newCommodityInput.trim()] }));
+    setNewCommodityInput('');
+  };
+  const handleRemoveCommodity = (idx: number) => {
+    setFooterContentInput((prev) => ({ ...prev, commodities: prev.commodities.filter((_, i) => i !== idx) }));
+  };
+  const handleSaveFooterContent = (e: React.FormEvent) => {
+    e.preventDefault();
+    db.saveSiteSettings({ footerContent: footerContentInput });
+    showToast('Konten footer website berhasil disimpan!');
+  };
+
+  const [aboutContentInput, setAboutContentInput] = useState<AboutPageContent>(siteSettings.aboutPageContent);
+  const handleSaveAboutContent = (e: React.FormEvent) => {
+    e.preventDefault();
+    db.saveSiteSettings({ aboutPageContent: aboutContentInput });
+    showToast('Konten halaman "Tentang Kios Sedekah" berhasil disimpan!');
+  };
+
   // ---------------- PHOTO MANAGER HANDLERS ----------------
   const [logoUrlInput, setLogoUrlInput] = useState(siteSettings.storeLogoImage || '');
   const [bannerUrlInput, setBannerUrlInput] = useState(siteSettings.heroBannerImage || '');
@@ -1176,6 +1245,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         >
           <ImageIcon className="w-4 h-4 text-teal-400" />
           <span>Galeri Foto & Logo ({photos.length})</span>
+        </button>
+
+        <button
+          onClick={() => setAdminTab('page_content')}
+          className={`px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+            adminTab === 'page_content'
+              ? 'bg-neutral-900 text-white shadow-xs'
+              : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
+          }`}
+        >
+          <FileText className="w-4 h-4 text-sky-500" />
+          <span>Konten Halaman Depan, Footer & Tentang</span>
         </button>
 
         {/* RUMAH TAHFIDZ SUB-TABS */}
@@ -2010,6 +2091,54 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 Simpan Nama Menu Navbar
               </button>
             </form>
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-4">
+            <h3 className="font-bold text-lg text-neutral-900 flex items-center gap-2">
+              <SlidersHorizontal className="w-5 h-5 text-teal-600" /> Urutan & Tampilkan Menu Navbar
+            </h3>
+            <p className="text-xs text-neutral-500 -mt-2">
+              Geser (drag) kartu menu ke kiri/kanan untuk mengubah urutan tampil di navbar. Klik ikon mata untuk menyembunyikan menu dari halaman depan tanpa menghapus datanya.
+            </p>
+
+            <div className="flex flex-wrap items-stretch gap-3 pt-1">
+              {navOrderInput.map((item, idx) => (
+                <div
+                  key={item.key}
+                  draggable
+                  onDragStart={() => setDraggedNavIndex(idx)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleDropNavItem(idx)}
+                  onDragEnd={() => setDraggedNavIndex(null)}
+                  className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl border-2 select-none cursor-move transition-all ${
+                    item.visible
+                      ? 'bg-emerald-50 border-emerald-200'
+                      : 'bg-neutral-100 border-neutral-200 opacity-60'
+                  } ${draggedNavIndex === idx ? 'ring-2 ring-emerald-500 scale-[1.03]' : ''}`}
+                >
+                  <GripVertical className="w-4 h-4 text-neutral-400 shrink-0" />
+                  <span className="text-xs font-bold text-neutral-800 whitespace-nowrap">{NAV_ITEM_LABELS[item.key]}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleNavVisible(idx)}
+                    title={item.visible ? 'Sembunyikan dari navbar' : 'Tampilkan di navbar'}
+                    className={`p-1.5 rounded-lg cursor-pointer transition-colors shrink-0 ${
+                      item.visible ? 'bg-emerald-600 text-white hover:bg-emerald-700' : 'bg-neutral-300 text-neutral-600 hover:bg-neutral-400'
+                    }`}
+                  >
+                    {item.visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSaveNavOrder}
+              className="px-5 py-2.5 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              Simpan Urutan & Visibilitas Menu
+            </button>
           </div>
 
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-6">
@@ -3038,6 +3167,304 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <p className="text-xs text-neutral-400 col-span-full">Belum ada foto dokumentasi.</p>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------- SUB TAB: PAGE CONTENT (Hero / Footer / About) ---------------- */}
+      {adminTab === 'page_content' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* HERO / HOMEPAGE CONTENT */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-6">
+            <div className="border-b border-neutral-100 pb-4">
+              <h3 className="font-bold text-lg text-neutral-900 flex items-center gap-2">
+                <Store className="w-5 h-5 text-emerald-700" /> Konten Halaman Depan (Katalog Sembako)
+              </h3>
+              <p className="text-xs text-neutral-500 mt-1">Teks badge, 3 kotak keunggulan, dan tombol pada banner utama halaman depan.</p>
+            </div>
+
+            <form onSubmit={handleSaveHeroContent} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">Teks Badge Kecil (di atas judul besar)</label>
+                <input
+                  type="text"
+                  required
+                  value={heroContentInput.badgeText}
+                  onChange={(e) => setHeroContentInput({ ...heroContentInput, badgeText: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
+                  <label className="block text-[11px] font-bold text-neutral-500 uppercase">Kotak Keunggulan 1</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Judul kecil (misal: Harga Jujur)"
+                    value={heroContentInput.feature1Label}
+                    onChange={(e) => setHeroContentInput({ ...heroContentInput, feature1Label: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Teks tebal (misal: Ecer & Grosir)"
+                    value={heroContentInput.feature1Value}
+                    onChange={(e) => setHeroContentInput({ ...heroContentInput, feature1Value: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
+                  <label className="block text-[11px] font-bold text-neutral-500 uppercase">Kotak Keunggulan 2</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Judul kecil"
+                    value={heroContentInput.feature2Label}
+                    onChange={(e) => setHeroContentInput({ ...heroContentInput, feature2Label: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Teks tebal"
+                    value={heroContentInput.feature2Value}
+                    onChange={(e) => setHeroContentInput({ ...heroContentInput, feature2Value: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
+                  <label className="block text-[11px] font-bold text-neutral-500 uppercase">Kotak Keunggulan 3</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Judul kecil"
+                    value={heroContentInput.feature3Label}
+                    onChange={(e) => setHeroContentInput({ ...heroContentInput, feature3Label: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Teks tebal"
+                    value={heroContentInput.feature3Value}
+                    onChange={(e) => setHeroContentInput({ ...heroContentInput, feature3Value: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Teks Tombol Utama (kuning)</label>
+                  <input
+                    type="text"
+                    required
+                    value={heroContentInput.primaryButtonText}
+                    onChange={(e) => setHeroContentInput({ ...heroContentInput, primaryButtonText: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Teks Tombol Kedua (transparan)</label>
+                  <input
+                    type="text"
+                    required
+                    value={heroContentInput.secondaryButtonText}
+                    onChange={(e) => setHeroContentInput({ ...heroContentInput, secondaryButtonText: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Simpan Konten Halaman Depan
+              </button>
+            </form>
+          </div>
+
+          {/* ABOUT / KIOS SEDEKAH PAGE STATS */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-6">
+            <div className="border-b border-neutral-100 pb-4">
+              <h3 className="font-bold text-lg text-neutral-900 flex items-center gap-2">
+                <Info className="w-5 h-5 text-emerald-700" /> Konten Halaman "Tentang Kios Sedekah"
+              </h3>
+              <p className="text-xs text-neutral-500 mt-1">
+                Badge dan 3 angka statistik pada halaman profil toko (label menu ini mengikuti nama yang Anda atur di "Pengaturan Nama Menu Navbar").
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveAboutContent} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">Teks Badge Kecil</label>
+                <input
+                  type="text"
+                  required
+                  value={aboutContentInput.badgeText}
+                  onChange={(e) => setAboutContentInput({ ...aboutContentInput, badgeText: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
+                  <label className="block text-[11px] font-bold text-neutral-500 uppercase">Statistik 1</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Angka (misal: 12+ Tahun)"
+                    value={aboutContentInput.stat1Value}
+                    onChange={(e) => setAboutContentInput({ ...aboutContentInput, stat1Value: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Keterangan"
+                    value={aboutContentInput.stat1Label}
+                    onChange={(e) => setAboutContentInput({ ...aboutContentInput, stat1Label: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
+                  <label className="block text-[11px] font-bold text-neutral-500 uppercase">Statistik 2</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Angka"
+                    value={aboutContentInput.stat2Value}
+                    onChange={(e) => setAboutContentInput({ ...aboutContentInput, stat2Value: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Keterangan"
+                    value={aboutContentInput.stat2Label}
+                    onChange={(e) => setAboutContentInput({ ...aboutContentInput, stat2Label: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
+                  <label className="block text-[11px] font-bold text-neutral-500 uppercase">Statistik 3</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Angka"
+                    value={aboutContentInput.stat3Value}
+                    onChange={(e) => setAboutContentInput({ ...aboutContentInput, stat3Value: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Keterangan"
+                    value={aboutContentInput.stat3Label}
+                    onChange={(e) => setAboutContentInput({ ...aboutContentInput, stat3Label: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Simpan Konten Halaman Tentang
+              </button>
+            </form>
+          </div>
+
+          {/* FOOTER CONTENT */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-6">
+            <div className="border-b border-neutral-100 pb-4">
+              <h3 className="font-bold text-lg text-neutral-900 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-neutral-700" /> Konten Footer Website
+              </h3>
+              <p className="text-xs text-neutral-500 mt-1">Teks deskripsi singkat, daftar komoditas pokok, dan tagline paling bawah di footer.</p>
+            </div>
+
+            <form onSubmit={handleSaveFooterContent} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">Kalimat Deskripsi Singkat (setelah tagline toko)</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={footerContentInput.aboutText}
+                  onChange={(e) => setFooterContentInput({ ...footerContentInput, aboutText: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-2">Daftar "Komoditas Pokok"</label>
+                <div className="space-y-2 mb-3">
+                  {footerContentInput.commodities.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2">
+                      <span className="flex-1 text-xs text-neutral-800">{item}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCommodity(idx)}
+                        className="p-1 bg-rose-100 text-rose-700 rounded-md cursor-pointer shrink-0"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  {footerContentInput.commodities.length === 0 && (
+                    <p className="text-xs text-neutral-400">Belum ada item ditambahkan.</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newCommodityInput}
+                    onChange={(e) => setNewCommodityInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCommodity();
+                      }
+                    }}
+                    placeholder="misal: Beras Pandan Wangi & Ramos"
+                    className="flex-1 px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCommodity}
+                    className="px-3.5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Tambah
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">Tagline Paling Bawah Footer</label>
+                <input
+                  type="text"
+                  required
+                  value={footerContentInput.bottomTagline}
+                  onChange={(e) => setFooterContentInput({ ...footerContentInput, bottomTagline: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-900 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Simpan Konten Footer
+              </button>
+            </form>
           </div>
         </div>
       )}

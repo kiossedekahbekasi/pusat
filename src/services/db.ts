@@ -70,6 +70,45 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     kiosSedekah: 'Kios Sedekah',
     kiosSedekahBadge: '',
   },
+  navOrder: [
+    { key: 'catalog', visible: true },
+    { key: 'tahfidz', visible: true },
+    { key: 'about', visible: true },
+    { key: 'kios_sedekah', visible: true },
+    { key: 'packages', visible: true },
+  ],
+  heroContent: {
+    badgeText: 'Pusat Sembilan Bahan Pokok Resmi & Terpercaya',
+    feature1Label: 'Harga Jujur',
+    feature1Value: 'Ecer & Grosir',
+    feature2Label: 'Pengiriman',
+    feature2Value: 'Hari Yang Sama',
+    feature3Label: 'Kualitas',
+    feature3Value: '100% Asli & Fresh',
+    primaryButtonText: 'Lihat Katalog Sembako',
+    secondaryButtonText: 'Tentang Toko Kami',
+  },
+  footerContent: {
+    aboutText: 'Melayani pasokan sembako eceran dan grosir partai besar dengan timbangan jujur dan harga terjangkau.',
+    commodities: [
+      'Beras Pandan Wangi & Ramos',
+      'Minyak Goreng Pouch 1L & 2L',
+      'Gula Pasir & Pemani Murni',
+      'Telur Ayam Negeri Segar',
+      'Tepung Terigu & Tapioka',
+      'Mie Instan Dus & Eceran',
+    ],
+    bottomTagline: 'Dibuat untuk melayani kebutuhan pokok keluarga Indonesia',
+  },
+  aboutPageContent: {
+    badgeText: 'Profil Toko Sembako Resmi',
+    stat1Value: '12+ Tahun',
+    stat1Label: 'Pengalaman Melayani',
+    stat2Value: '2.500+',
+    stat2Label: 'Pelanggan Setia Harian',
+    stat3Value: '100% Asli',
+    stat3Label: 'Sembako Bersertifikat',
+  },
 };
 
 export const DEFAULT_PHOTOS: CustomPhoto[] = [
@@ -309,6 +348,10 @@ export const db = {
         ...DEFAULT_SITE_SETTINGS,
         ...parsed,
         navLabels: { ...DEFAULT_SITE_SETTINGS.navLabels, ...(parsed.navLabels || {}) },
+        navOrder: parsed.navOrder && Array.isArray(parsed.navOrder) && parsed.navOrder.length > 0 ? parsed.navOrder : DEFAULT_SITE_SETTINGS.navOrder,
+        heroContent: { ...DEFAULT_SITE_SETTINGS.heroContent, ...(parsed.heroContent || {}) },
+        footerContent: { ...DEFAULT_SITE_SETTINGS.footerContent, ...(parsed.footerContent || {}) },
+        aboutPageContent: { ...DEFAULT_SITE_SETTINGS.aboutPageContent, ...(parsed.aboutPageContent || {}) },
       };
     } catch {
       return DEFAULT_SITE_SETTINGS;
@@ -321,6 +364,10 @@ export const db = {
       ...current,
       ...settings,
       navLabels: { ...current.navLabels, ...(settings.navLabels || {}) },
+      navOrder: settings.navOrder && settings.navOrder.length > 0 ? settings.navOrder : current.navOrder,
+      heroContent: { ...current.heroContent, ...(settings.heroContent || {}) },
+      footerContent: { ...current.footerContent, ...(settings.footerContent || {}) },
+      aboutPageContent: { ...current.aboutPageContent, ...(settings.aboutPageContent || {}) },
     };
     localStorage.setItem(KEYS.SETTINGS, JSON.stringify(updated));
     saveToFirestore('settings', updated);

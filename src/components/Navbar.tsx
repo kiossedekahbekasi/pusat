@@ -171,74 +171,98 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Navigation Tabs */}
         <nav className="flex items-center gap-2 mt-3 pt-2 border-t border-neutral-100 overflow-x-auto no-scrollbar text-sm">
-          <button
-            onClick={() => setActiveTab('catalog')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
-              activeTab === 'catalog'
-                ? 'bg-emerald-800 text-white shadow-xs font-bold'
-                : 'text-neutral-600 hover:bg-neutral-100'
-            }`}
-          >
-            <Store className="w-4 h-4" />
-            <span>{siteSettings.navLabels.catalog}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('tahfidz')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
-              activeTab === 'tahfidz'
-                ? 'bg-emerald-800 text-white shadow-xs font-bold'
-                : 'text-emerald-900 bg-emerald-50 hover:bg-emerald-100 font-semibold border border-emerald-200'
-            }`}
-          >
-            <BookOpen className="w-4 h-4 text-emerald-700" />
-            <span>{siteSettings.navLabels.tahfidz}</span>
-            {siteSettings.navLabels.tahfidzBadge && (
-              <span className="bg-amber-400 text-emerald-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full uppercase">{siteSettings.navLabels.tahfidzBadge}</span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('about')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
-              activeTab === 'about'
-                ? 'bg-emerald-800 text-white shadow-xs font-bold'
-                : 'text-neutral-600 hover:bg-neutral-100'
-            }`}
-          >
-            <Info className="w-4 h-4" />
-            <span>{siteSettings.navLabels.about}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('kios_sedekah')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
-              activeTab === 'kios_sedekah'
-                ? 'bg-emerald-800 text-white shadow-xs font-bold'
-                : 'text-amber-900 bg-amber-50 hover:bg-amber-100 font-semibold border border-amber-200'
-            }`}
-          >
-            <HeartHandshake className="w-4 h-4 text-amber-700" />
-            <span>{siteSettings.navLabels.kiosSedekah}</span>
-            {siteSettings.navLabels.kiosSedekahBadge && (
-              <span className="bg-amber-400 text-emerald-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full uppercase">{siteSettings.navLabels.kiosSedekahBadge}</span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('packages')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
-              activeTab === 'packages'
-                ? 'bg-emerald-800 text-white shadow-xs font-bold'
-                : 'text-neutral-600 hover:bg-neutral-100'
-            }`}
-          >
-            <Gift className="w-4 h-4 text-amber-300" />
-            <span>{siteSettings.navLabels.packages}</span>
-            {siteSettings.navLabels.packagesBadge && (
-              <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{siteSettings.navLabels.packagesBadge}</span>
-            )}
-          </button>
+          {(siteSettings.navOrder || []).filter((item) => item.visible).map((item) => {
+            if (item.key === 'catalog') {
+              return (
+                <button
+                  key="catalog"
+                  onClick={() => setActiveTab('catalog')}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                    activeTab === 'catalog'
+                      ? 'bg-emerald-800 text-white shadow-xs font-bold'
+                      : 'text-neutral-600 hover:bg-neutral-100'
+                  }`}
+                >
+                  <Store className="w-4 h-4" />
+                  <span>{siteSettings.navLabels.catalog}</span>
+                </button>
+              );
+            }
+            if (item.key === 'tahfidz') {
+              return (
+                <button
+                  key="tahfidz"
+                  onClick={() => setActiveTab('tahfidz')}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                    activeTab === 'tahfidz'
+                      ? 'bg-emerald-800 text-white shadow-xs font-bold'
+                      : 'text-emerald-900 bg-emerald-50 hover:bg-emerald-100 font-semibold border border-emerald-200'
+                  }`}
+                >
+                  <BookOpen className="w-4 h-4 text-emerald-700" />
+                  <span>{siteSettings.navLabels.tahfidz}</span>
+                  {siteSettings.navLabels.tahfidzBadge && (
+                    <span className="bg-amber-400 text-emerald-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full uppercase">{siteSettings.navLabels.tahfidzBadge}</span>
+                  )}
+                </button>
+              );
+            }
+            if (item.key === 'about') {
+              return (
+                <button
+                  key="about"
+                  onClick={() => setActiveTab('about')}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                    activeTab === 'about'
+                      ? 'bg-emerald-800 text-white shadow-xs font-bold'
+                      : 'text-neutral-600 hover:bg-neutral-100'
+                  }`}
+                >
+                  <Info className="w-4 h-4" />
+                  <span>{siteSettings.navLabels.about}</span>
+                </button>
+              );
+            }
+            if (item.key === 'kios_sedekah') {
+              return (
+                <button
+                  key="kios_sedekah"
+                  onClick={() => setActiveTab('kios_sedekah')}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                    activeTab === 'kios_sedekah'
+                      ? 'bg-emerald-800 text-white shadow-xs font-bold'
+                      : 'text-amber-900 bg-amber-50 hover:bg-amber-100 font-semibold border border-amber-200'
+                  }`}
+                >
+                  <HeartHandshake className="w-4 h-4 text-amber-700" />
+                  <span>{siteSettings.navLabels.kiosSedekah}</span>
+                  {siteSettings.navLabels.kiosSedekahBadge && (
+                    <span className="bg-amber-400 text-emerald-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full uppercase">{siteSettings.navLabels.kiosSedekahBadge}</span>
+                  )}
+                </button>
+              );
+            }
+            if (item.key === 'packages') {
+              return (
+                <button
+                  key="packages"
+                  onClick={() => setActiveTab('packages')}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                    activeTab === 'packages'
+                      ? 'bg-emerald-800 text-white shadow-xs font-bold'
+                      : 'text-neutral-600 hover:bg-neutral-100'
+                  }`}
+                >
+                  <Gift className="w-4 h-4 text-amber-300" />
+                  <span>{siteSettings.navLabels.packages}</span>
+                  {siteSettings.navLabels.packagesBadge && (
+                    <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{siteSettings.navLabels.packagesBadge}</span>
+                  )}
+                </button>
+              );
+            }
+            return null;
+          })}
 
           {/* Dynamic Custom Pages Links */}
           {customPages.map((page) => (

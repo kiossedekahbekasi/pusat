@@ -73,6 +73,41 @@ export interface NavLabels {
   admin: string;
 }
 
+export type NavItemKey = 'catalog' | 'tahfidz' | 'kios_sedekah' | 'about' | 'packages';
+
+export interface NavItemConfig {
+  key: NavItemKey;
+  visible: boolean;
+}
+
+export interface HeroContent {
+  badgeText: string;
+  feature1Label: string;
+  feature1Value: string;
+  feature2Label: string;
+  feature2Value: string;
+  feature3Label: string;
+  feature3Value: string;
+  primaryButtonText: string;
+  secondaryButtonText: string;
+}
+
+export interface FooterContent {
+  aboutText: string;
+  commodities: string[];
+  bottomTagline: string;
+}
+
+export interface AboutPageContent {
+  badgeText: string;
+  stat1Value: string;
+  stat1Label: string;
+  stat2Value: string;
+  stat2Label: string;
+  stat3Value: string;
+  stat3Label: string;
+}
+
 export interface SiteSettings {
   fontFamily: FontFamilyType;
   fontSize: FontSizeScale;
@@ -82,6 +117,10 @@ export interface SiteSettings {
   heroBannerImage: string;
   storeLogoImage: string;
   navLabels: NavLabels;
+  navOrder: NavItemConfig[];
+  heroContent: HeroContent;
+  footerContent: FooterContent;
+  aboutPageContent: AboutPageContent;
 }
 
 export interface CustomPhoto {

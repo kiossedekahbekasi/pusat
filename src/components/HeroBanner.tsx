@@ -35,7 +35,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-700/60 text-emerald-100 border border-emerald-500/30 text-xs font-semibold backdrop-blur-xs">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>Pusat Sembilan Bahan Pokok Resmi & Terpercaya</span>
+            <span>{siteSettings.heroContent.badgeText}</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-white">
@@ -51,24 +51,24 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             <div className="bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/10 flex items-center gap-2.5">
               <Tag className="w-5 h-5 text-amber-300 shrink-0" />
               <div>
-                <div className="text-xs text-emerald-200">Harga Jujur</div>
-                <div className="text-xs sm:text-sm font-bold">Ecer & Grosir</div>
+                <div className="text-xs text-emerald-200">{siteSettings.heroContent.feature1Label}</div>
+                <div className="text-xs sm:text-sm font-bold">{siteSettings.heroContent.feature1Value}</div>
               </div>
             </div>
 
             <div className="bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/10 flex items-center gap-2.5">
               <Truck className="w-5 h-5 text-emerald-300 shrink-0" />
               <div>
-                <div className="text-xs text-emerald-200">Pengiriman</div>
-                <div className="text-xs sm:text-sm font-bold">Hari Yang Sama</div>
+                <div className="text-xs text-emerald-200">{siteSettings.heroContent.feature2Label}</div>
+                <div className="text-xs sm:text-sm font-bold">{siteSettings.heroContent.feature2Value}</div>
               </div>
             </div>
 
             <div className="bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/10 flex items-center gap-2.5 col-span-2 sm:col-span-1">
               <ShieldCheck className="w-5 h-5 text-teal-300 shrink-0" />
               <div>
-                <div className="text-xs text-emerald-200">Kualitas</div>
-                <div className="text-xs sm:text-sm font-bold">100% Asli & Fresh</div>
+                <div className="text-xs text-emerald-200">{siteSettings.heroContent.feature3Label}</div>
+                <div className="text-xs sm:text-sm font-bold">{siteSettings.heroContent.feature3Value}</div>
               </div>
             </div>
           </div>
@@ -79,7 +79,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               onClick={onExploreClick}
               className="px-6 py-3.5 rounded-xl bg-amber-400 text-neutral-950 font-bold hover:bg-amber-300 transition-colors shadow-md flex items-center gap-2 group cursor-pointer text-sm"
             >
-              <span>Lihat Katalog Sembako</span>
+              <span>{siteSettings.heroContent.primaryButtonText}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
 
@@ -87,7 +87,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               onClick={onAboutClick}
               className="px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold transition-colors border border-white/20 flex items-center gap-2 cursor-pointer text-sm"
             >
-              <span>Tentang Toko Kami</span>
+              <span>{siteSettings.heroContent.secondaryButtonText}</span>
             </button>
           </div>
         </div>

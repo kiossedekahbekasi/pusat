@@ -16,14 +16,15 @@ import {
   MessageSquare,
   Image as ImageIcon
 } from 'lucide-react';
-import { StoreInfo, CustomPhoto } from '../types';
+import { StoreInfo, CustomPhoto, SiteSettings } from '../types';
 
 interface AboutSectionProps {
   storeInfo: StoreInfo;
   photos: CustomPhoto[];
+  siteSettings: SiteSettings;
 }
 
-export const AboutSection: React.FC<AboutSectionProps> = ({ storeInfo, photos }) => {
+export const AboutSection: React.FC<AboutSectionProps> = ({ storeInfo, photos, siteSettings }) => {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   const sembako9List = [
@@ -45,7 +46,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ storeInfo, photos })
         <div className="max-w-3xl space-y-4 relative z-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-700/60 text-emerald-100 border border-emerald-500/30 text-xs font-semibold">
             <Store className="w-4 h-4 text-emerald-300" />
-            <span>Profil Toko Sembako Resmi</span>
+            <span>{siteSettings.aboutPageContent.badgeText}</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
@@ -64,16 +65,16 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ storeInfo, photos })
 
           <div className="flex flex-wrap gap-6 pt-4 border-t border-emerald-700/50 text-emerald-200 text-sm">
             <div>
-              <span className="block text-2xl font-black text-amber-300">12+ Tahun</span>
-              <span className="text-xs">Pengalaman Melayani</span>
+              <span className="block text-2xl font-black text-amber-300">{siteSettings.aboutPageContent.stat1Value}</span>
+              <span className="text-xs">{siteSettings.aboutPageContent.stat1Label}</span>
             </div>
             <div>
-              <span className="block text-2xl font-black text-amber-300">2.500+</span>
-              <span className="text-xs">Pelanggan Setia Harian</span>
+              <span className="block text-2xl font-black text-amber-300">{siteSettings.aboutPageContent.stat2Value}</span>
+              <span className="text-xs">{siteSettings.aboutPageContent.stat2Label}</span>
             </div>
             <div>
-              <span className="block text-2xl font-black text-amber-300">100% Asli</span>
-              <span className="text-xs">Sembako Bersertifikat</span>
+              <span className="block text-2xl font-black text-amber-300">{siteSettings.aboutPageContent.stat3Value}</span>
+              <span className="text-xs">{siteSettings.aboutPageContent.stat3Label}</span>
             </div>
           </div>
         </div>

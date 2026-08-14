@@ -1,13 +1,50 @@
 import React from 'react';
-import { Store, Phone, MapPin, Clock, ShieldCheck, UserCheck } from 'lucide-react';
-import { StoreInfo } from '../types';
+import { Store, Phone, MapPin, Clock, ShieldCheck, UserCheck, BookOpen, Info, HeartHandshake, Gift } from 'lucide-react';
+import { StoreInfo, SiteSettings, CustomPage, NavItemKey } from '../types';
 
 interface FooterProps {
-  onNavigateTab: (tab: 'catalog' | 'tahfidz' | 'about' | 'packages' | 'admin') => void;
+  onNavigateTab: (tab: string) => void;
   storeInfo: StoreInfo;
+  siteSettings: SiteSettings;
+  customPages?: CustomPage[];
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigateTab, storeInfo }) => {
+const NAV_META: Record<NavItemKey, { tab: string; icon: React.ReactNode; getLabel: (s: SiteSettings) => string; className: string }> = {
+  catalog: {
+    tab: 'catalog',
+    icon: null,
+    getLabel: (s) => s.navLabels.catalog,
+    className: '',
+  },
+  tahfidz: {
+    tab: 'tahfidz',
+    icon: <BookOpen className="w-3.5 h-3.5" />,
+    getLabel: (s) => s.navLabels.tahfidz,
+    className: 'font-semibold text-emerald-300',
+  },
+  about: {
+    tab: 'about',
+    icon: <Info className="w-3.5 h-3.5" />,
+    getLabel: (s) => s.navLabels.about,
+    className: '',
+  },
+  kios_sedekah: {
+    tab: 'kios_sedekah',
+    icon: <HeartHandshake className="w-3.5 h-3.5" />,
+    getLabel: (s) => s.navLabels.kiosSedekah,
+    className: 'font-semibold text-amber-300',
+  },
+  packages: {
+    tab: 'packages',
+    icon: <Gift className="w-3.5 h-3.5" />,
+    getLabel: (s) => s.navLabels.packages,
+    className: '',
+  },
+};
+
+export const Footer: React.FC<FooterProps> = ({ onNavigateTab, storeInfo, siteSettings, customPages = [] }) => {
+  const orderedVisibleItems = (siteSettings.navOrder || []).filter((item) => item.visible);
+
   return (
     <footer className="bg-neutral-900 text-neutral-300 mt-16 border-t border-neutral-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
@@ -24,7 +61,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateTab, storeInfo }) => {
             </div>
 
             <p className="text-xs text-neutral-400 leading-relaxed">
-              {storeInfo.tagline}. Melayani pasokan sembako eceran dan grosir partai besar dengan timbangan jujur dan harga terjangkau.
+              {storeInfo.tagline}. {siteSettings.footerContent.aboutText}
             </p>
 
             <div className="flex items-center gap-2 text-xs text-emerald-400 font-semibold">
@@ -38,44 +75,38 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateTab, storeInfo }) => {
               Navigasi Cepat
             </h4>
             <ul className="space-y-2 text-xs">
-              <li>
-                <button
-                  onClick={() => onNavigateTab('catalog')}
-                  className="hover:text-emerald-400 transition-colors cursor-pointer"
-                >
-                  Katalog Sembako Lengkap
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateTab('tahfidz')}
-                  className="hover:text-emerald-400 font-semibold text-emerald-300 transition-colors cursor-pointer"
-                >
-                  Rumah Tahfidz Nurul A'laa
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateTab('about')}
-                  className="hover:text-emerald-400 transition-colors cursor-pointer"
-                >
-                  Tentang Toko Sembako (Profil & Lokasi)
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateTab('packages')}
-                  className="hover:text-emerald-400 transition-colors cursor-pointer"
-                >
-                  Paket Sembako Hemat & Sedekah
-                </button>
-              </li>
+              {orderedVisibleItems.map((item) => {
+                const meta = NAV_META[item.key];
+                if (!meta) return null;
+                return (
+                  <li key={item.key}>
+                    <button
+                      onClick={() => onNavigateTab(meta.tab)}
+                      className={`hover:text-emerald-400 transition-colors cursor-pointer flex items-center gap-1.5 ${meta.className}`}
+                    >
+                      {meta.icon}
+                      <span>{meta.getLabel(siteSettings)}</span>
+                    </button>
+                  </li>
+                );
+              })}
+              {customPages.map((page) => (
+                <li key={page.id}>
+                  <button
+                    onClick={() => onNavigateTab(page.id)}
+                    className="hover:text-emerald-400 transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>{page.icon || '📄'}</span>
+                    <span>{page.title}</span>
+                  </button>
+                </li>
+              ))}
               <li>
                 <button
                   onClick={() => onNavigateTab('admin')}
                   className="text-amber-300 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
                 >
-                  <UserCheck className="w-3.5 h-3.5" /> Halaman Login & Panel Admin
+                  <UserCheck className="w-3.5 h-3.5" /> {siteSettings.navLabels.admin}
                 </button>
               </li>
             </ul>
@@ -87,12 +118,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateTab, storeInfo }) => {
               Komoditas Pokok
             </h4>
             <ul className="space-y-1.5 text-xs text-neutral-400">
-              <li>Beras Pandan Wangi & Ramos</li>
-              <li>Minyak Goreng Pouch 1L & 2L</li>
-              <li>Gula Pasir & Pemani Murni</li>
-              <li>Telur Ayam Negeri Segar</li>
-              <li>Tepung Terigu & Tapioka</li>
-              <li>Mie Instan Dus & Eceran</li>
+              {siteSettings.footerContent.commodities.map((item, idx) => (
+                <li key={idx}>{item}</li>
+              ))}
             </ul>
           </div>
 
@@ -123,11 +151,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateTab, storeInfo }) => {
             © {new Date().getFullYear()} {storeInfo.name}. Seluruh Hak Cipta Dilindungi.
           </div>
           <div className="flex items-center gap-1 text-neutral-400">
-            <span>Dibuat untuk melayani kebutuhan pokok keluarga Indonesia</span>
+            <span>{siteSettings.footerContent.bottomTagline}</span>
           </div>
         </div>
       </div>
     </footer>
   );
 };
-
