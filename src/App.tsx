@@ -213,8 +213,8 @@ export default function App() {
   const totalCartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900 font-sans flex flex-col justify-between selection:bg-emerald-200 selection:text-emerald-900">
-      <div>
+    <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-neutral-50 text-neutral-900 font-sans flex flex-col justify-between selection:bg-emerald-200 selection:text-emerald-900">
+      <div className="w-full">
         {/* Navigation Bar */}
         <Navbar
           activeTab={activeTab}
@@ -233,7 +233,7 @@ export default function App() {
         />
 
         {/* Main Content Area */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6">
+        <main className="w-full max-w-7xl mx-auto px-4 sm:px-6">
           {activeTab === 'catalog' && (
             <div className="space-y-8 pb-12">
               {/* Hero Banner */}
