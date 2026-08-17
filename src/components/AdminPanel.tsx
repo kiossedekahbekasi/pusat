@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/db';
 import { compressImageFile } from '../utils/imageUpload';
+import { useStoreStatus, DAY_LABELS } from '../utils/storeStatus';
 import { 
   AdminUser, 
   SiteSettings, 
@@ -67,6 +68,41 @@ import {
   SlidersHorizontal,
   Info
 } from 'lucide-react';
+
+/** Pratinjau real-time badge BUKA/TUTUP mengikuti jam & hari yang sedang diketik admin,
+ * sebelum disimpan — supaya admin langsung tahu hasilnya tanpa harus save dulu. */
+const StoreStatusPreview: React.FC<{
+  statusMode: 'otomatis' | 'manual';
+  storeStatus: 'buka' | 'tutup';
+  openTime: string;
+  closeTime: string;
+  closedDays: number[];
+}> = ({ statusMode, storeStatus, openTime, closeTime, closedDays }) => {
+  const { isOpen, currentTime } = useStoreStatus({
+    statusMode,
+    storeStatus,
+    openTime,
+    closeTime,
+    closedDays,
+  } as StoreInfo);
+
+  return (
+    <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl bg-white border border-emerald-200">
+      <div className="text-[11px] text-neutral-500">
+        Pratinjau saat ini ({currentTime} WIB):
+      </div>
+      <span
+        className={`text-[11px] px-2.5 py-1 rounded-full border font-bold ${
+          isOpen
+            ? 'bg-emerald-500/10 text-emerald-700 border-emerald-300'
+            : 'bg-rose-500/10 text-rose-700 border-rose-300'
+        }`}
+      >
+        {isOpen ? 'BUKA' : 'TUTUP'}
+      </span>
+    </div>
+  );
+};
 
 interface AdminPanelProps {
   adminUser?: AdminUser | null;
@@ -1071,6 +1107,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [infoWa, setInfoWa] = useState(storeInfo.whatsapp);
   const [infoHours, setInfoHours] = useState(storeInfo.operatingHours);
   const [infoStoreStatus, setInfoStoreStatus] = useState<'buka' | 'tutup'>(storeInfo.storeStatus || 'buka');
+  const [infoStatusMode, setInfoStatusMode] = useState<'otomatis' | 'manual'>(storeInfo.statusMode || 'otomatis');
+  const [infoOpenTime, setInfoOpenTime] = useState(storeInfo.openTime || '06:00');
+  const [infoCloseTime, setInfoCloseTime] = useState(storeInfo.closeTime || '21:00');
+  const [infoClosedDays, setInfoClosedDays] = useState<number[]>(storeInfo.closedDays || []);
+
+  const toggleClosedDay = (dayIndex: number) => {
+    setInfoClosedDays((prev) =>
+      prev.includes(dayIndex) ? prev.filter((d) => d !== dayIndex) : [...prev, dayIndex]
+    );
+  };
 
   const handleSaveStoreInfoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1085,6 +1131,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       whatsapp: infoWa,
       operatingHours: infoHours,
       storeStatus: infoStoreStatus,
+      statusMode: infoStatusMode,
+      openTime: infoOpenTime,
+      closeTime: infoCloseTime,
+      closedDays: infoClosedDays,
     });
     showToast('Informasi Profil Toko berhasil diperbarui ke database!');
   };
@@ -3721,32 +3771,114 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-neutral-700 mb-2">Status Toko Saat Ini (badge di halaman depan)</label>
+              <label className="block text-xs font-bold text-neutral-700 mb-2">Cara Menentukan Status Toko (badge BUKA/TUTUP)</label>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setInfoStoreStatus('buka')}
+                  onClick={() => setInfoStatusMode('otomatis')}
                   className={`flex-1 px-4 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 border-2 transition-all cursor-pointer ${
-                    infoStoreStatus === 'buka'
+                    infoStatusMode === 'otomatis'
                       ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
                       : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50'
                   }`}
                 >
-                  <span className="w-2 h-2 rounded-full bg-emerald-300"></span> BUKA
+                  <Clock className="w-3.5 h-3.5" /> Otomatis (sesuai jam)
                 </button>
                 <button
                   type="button"
-                  onClick={() => setInfoStoreStatus('tutup')}
+                  onClick={() => setInfoStatusMode('manual')}
                   className={`flex-1 px-4 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 border-2 transition-all cursor-pointer ${
-                    infoStoreStatus === 'tutup'
-                      ? 'bg-rose-600 text-white border-rose-700 shadow-xs'
+                    infoStatusMode === 'manual'
+                      ? 'bg-neutral-800 text-white border-neutral-900 shadow-xs'
                       : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50'
                   }`}
                 >
-                  <span className="w-2 h-2 rounded-full bg-rose-300"></span> TUTUP
+                  Manual
                 </button>
               </div>
-              <p className="text-[11px] text-neutral-400 mt-1.5">Pilih "TUTUP" untuk menampilkan badge merah saat toko sedang libur/tutup sementara di luar jam operasional normal.</p>
+              <p className="text-[11px] text-neutral-400 mt-1.5">
+                "Otomatis": badge BUKA/TUTUP berubah sendiri, mengikuti jam & hari libur toko di bawah — tidak perlu diklik-klik lagi.
+                "Manual": Anda yang memilih sendiri status BUKA/TUTUP, misalnya untuk libur mendadak di luar jadwal biasa.
+              </p>
+
+              {infoStatusMode === 'otomatis' ? (
+                <div className="mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-bold text-neutral-700 mb-1">Jam Buka</label>
+                      <input
+                        type="time"
+                        value={infoOpenTime}
+                        onChange={(e) => setInfoOpenTime(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-neutral-700 mb-1">Jam Tutup</label>
+                      <input
+                        type="time"
+                        value={infoCloseTime}
+                        onChange={(e) => setInfoCloseTime(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-neutral-700 mb-2">Hari Libur Toko (opsional)</label>
+                    <div className="flex flex-wrap gap-2">
+                      {DAY_LABELS.map((label, idx) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => toggleClosedDay(idx)}
+                          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                            infoClosedDays.includes(idx)
+                              ? 'bg-rose-600 text-white border-rose-700'
+                              : 'bg-white text-neutral-600 border-neutral-300 hover:bg-neutral-50'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[11px] text-neutral-400 mt-1.5">Klik hari yang dipilih untuk menandainya sebagai hari libur (toko otomatis TUTUP seharian). Kosongkan jika buka setiap hari.</p>
+                  </div>
+
+                  <StoreStatusPreview
+                    statusMode={infoStatusMode}
+                    storeStatus={infoStoreStatus}
+                    openTime={infoOpenTime}
+                    closeTime={infoCloseTime}
+                    closedDays={infoClosedDays}
+                  />
+                </div>
+              ) : (
+                <div className="mt-4 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setInfoStoreStatus('buka')}
+                    className={`flex-1 px-4 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 border-2 transition-all cursor-pointer ${
+                      infoStoreStatus === 'buka'
+                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
+                        : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-300"></span> BUKA
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInfoStoreStatus('tutup')}
+                    className={`flex-1 px-4 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 border-2 transition-all cursor-pointer ${
+                      infoStoreStatus === 'tutup'
+                        ? 'bg-rose-600 text-white border-rose-700 shadow-xs'
+                        : 'bg-white text-neutral-500 border-neutral-200 hover:bg-neutral-50'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full bg-rose-300"></span> TUTUP
+                  </button>
+                </div>
+              )}
             </div>
 
             <button

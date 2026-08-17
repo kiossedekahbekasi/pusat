@@ -1,6 +1,7 @@
 import React from 'react';
 import { ShoppingBag, Search, Store, Info, Gift, PhoneCall, SlidersHorizontal, UserCheck, Shield, BookOpen, HeartHandshake } from 'lucide-react';
 import { StoreInfo, AdminUser, SiteSettings, TahfidzProfile, CustomPage } from '../types';
+import { useStoreStatus } from '../utils/storeStatus';
 
 interface NavbarProps {
   activeTab: string;
@@ -33,14 +34,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   tahfidzProfile,
   customPages = [],
 }) => {
+  // Status BUKA/TUTUP di bar atas ini sekarang otomatis mengikuti jadwal toko,
+  // sinkron dengan badge yang ada di beranda (HeroBanner).
+  const { isOpen } = useStoreStatus(storeInfo);
+
   return (
     <header className="w-full sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-neutral-200 shadow-2xs">
       {/* Top Announcement Bar */}
-      <div className="bg-emerald-800 text-emerald-50 text-xs py-1.5 px-4">
+      <div className={`text-xs py-1.5 px-4 transition-colors ${isOpen ? 'bg-emerald-800 text-emerald-50' : 'bg-rose-800 text-rose-50'}`}>
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-1 text-center sm:text-left">
           <div className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="font-medium">TOKO {storeInfo.storeStatus === 'tutup' ? 'TUTUP' : 'BUKA'}: {storeInfo.operatingHours}</span>
+            <span className={`inline-block w-2 h-2 rounded-full animate-pulse ${isOpen ? 'bg-emerald-400' : 'bg-rose-300'}`}></span>
+            <span className="font-medium">TOKO {isOpen ? 'BUKA' : 'TUTUP'}: {storeInfo.operatingHours}</span>
             <span className="hidden md:inline">| Siap kirim area lokal & instan</span>
           </div>
           <div className="flex items-center gap-4 text-[11px] opacity-90">

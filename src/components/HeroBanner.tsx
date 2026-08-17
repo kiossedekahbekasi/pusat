@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Truck, ShieldCheck, Tag, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
 import { StoreInfo, SiteSettings } from '../types';
+import { useStoreStatus } from '../utils/storeStatus';
 
 interface HeroBannerProps {
   onExploreClick: () => void;
@@ -19,25 +20,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   storeInfo,
   siteSettings,
 }) => {
-  const [currentTime, setCurrentTime] = useState('');
-
-  useEffect(() => {
-    const updateClock = () => {
-      const timeStr = new Intl.DateTimeFormat('id-ID', {
-        timeZone: 'Asia/Jakarta',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      }).format(new Date());
-      setCurrentTime(timeStr);
-    };
-    updateClock();
-    const interval = setInterval(updateClock, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const isOpen = storeInfo.storeStatus !== 'tutup';
+  // Status BUKA/TUTUP & jam berjalan dihitung otomatis dari jadwal toko (real-time,
+  // ter-update sendiri setiap detik) — tidak lagi tergantung saklar manual saja.
+  const { isOpen, currentTime } = useStoreStatus(storeInfo);
 
   return (
     <div className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white rounded-3xl p-6 sm:p-10 shadow-lg overflow-hidden my-6">

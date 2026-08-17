@@ -218,6 +218,10 @@ export const STORE_INFO: StoreInfo = {
   operatingHours: 'Setiap Hari (Senin - Minggu): 06:00 - 21:00 WIB',
   deliveryRange: 'Pengiriman langsung (Lokal Toko / Kurir) radius hingga 15 Km & Pengiriman instan',
   storeStatus: 'buka',
+  statusMode: 'otomatis',
+  openTime: '06:00',
+  closeTime: '21:00',
+  closedDays: [],
   advantages: [
     {
       title: 'Harga Bersahabat (Ecer & Grosir)',

@@ -32,6 +32,14 @@ export interface StoreInfo {
   operatingHours: string;
   deliveryRange: string;
   storeStatus: 'buka' | 'tutup';
+  /** 'otomatis' = status BUKA/TUTUP dihitung sendiri dari jam & hari di bawah ini.
+   *  'manual' = memakai nilai storeStatus yang diatur admin secara manual. */
+  statusMode: 'otomatis' | 'manual';
+  /** Jam buka & tutup format 24 jam "HH:mm", contoh "07:30". Dipakai saat statusMode = 'otomatis'. */
+  openTime: string;
+  closeTime: string;
+  /** Hari libur toko (0 = Minggu ... 6 = Sabtu). Kosong berarti buka setiap hari. */
+  closedDays: number[];
   advantages: {
     title: string;
     desc: string;
