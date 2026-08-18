@@ -6,6 +6,22 @@ import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { firestore, auth } from '../lib/firebase';
 
+/**
+ * Menu navbar baru (mis. "Doa Anak") yang ditambahkan setelah situs sudah berjalan
+ * tidak akan otomatis muncul kalau kita hanya mengandalkan navOrder tersimpan apa
+ * adanya — data lama di localStorage/Firestore tidak tahu-menahu soal menu baru itu.
+ * Fungsi ini menambahkan key dari DEFAULT_SITE_SETTINGS.navOrder yang belum ada di
+ * navOrder tersimpan, tanpa mengubah urutan & visibilitas menu yang sudah diatur admin.
+ */
+const mergeNavOrder = (savedNavOrder: SiteSettings['navOrder'] | undefined): SiteSettings['navOrder'] => {
+  if (!savedNavOrder || !Array.isArray(savedNavOrder) || savedNavOrder.length === 0) {
+    return DEFAULT_SITE_SETTINGS.navOrder;
+  }
+  const existingKeys = new Set(savedNavOrder.map((item) => item.key));
+  const missingItems = DEFAULT_SITE_SETTINGS.navOrder.filter((item) => !existingKeys.has(item.key));
+  return missingItems.length > 0 ? [...savedNavOrder, ...missingItems] : savedNavOrder;
+};
+
 const KEYS = {
   PRODUCTS: 'tsbu_db_products_v1',
   STORE_INFO: 'tsbu_db_store_info_v1',
@@ -474,7 +490,7 @@ export const db = {
         ...DEFAULT_SITE_SETTINGS,
         ...parsed,
         navLabels: { ...DEFAULT_SITE_SETTINGS.navLabels, ...(parsed.navLabels || {}) },
-        navOrder: parsed.navOrder && Array.isArray(parsed.navOrder) && parsed.navOrder.length > 0 ? parsed.navOrder : DEFAULT_SITE_SETTINGS.navOrder,
+        navOrder: mergeNavOrder(parsed.navOrder),
         heroContent: { ...DEFAULT_SITE_SETTINGS.heroContent, ...(parsed.heroContent || {}) },
         footerContent: { ...DEFAULT_SITE_SETTINGS.footerContent, ...(parsed.footerContent || {}) },
         aboutPageContent: { ...DEFAULT_SITE_SETTINGS.aboutPageContent, ...(parsed.aboutPageContent || {}) },
