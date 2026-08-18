@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TahfidzProfile, Santri, KegiatanSantri } from '../types';
-import { BookOpen, Award, Calendar, MapPin, Phone, MessageSquare, Search, Filter, Sparkles, GraduationCap, X, ChevronRight, User } from 'lucide-react';
+import { BookOpen, Award, Calendar, MapPin, Phone, MessageSquare, Search, Filter, Sparkles, GraduationCap, X, ChevronRight, User, Play } from 'lucide-react';
 
 interface TahfidzSectionProps {
   tahfidzProfile: TahfidzProfile;
@@ -413,17 +413,33 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
                   key={kgt.id}
                   className="bg-white rounded-3xl border border-neutral-200 shadow-xs overflow-hidden flex flex-col justify-between hover:shadow-md transition-all group"
                 >
-                  {/* Photo Container with Category Badge */}
-                  <div className="relative h-52 sm:h-60 overflow-hidden bg-neutral-100 cursor-pointer" onClick={() => setSelectedPhotoModal(kgt)}>
-                    <img
-                      src={kgt.photoUrl}
-                      alt={kgt.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                  {/* Photo/Video Container with Category Badge — rasio kotak 1:1 seperti Instagram */}
+                  <div className="relative aspect-square overflow-hidden bg-neutral-100 cursor-pointer" onClick={() => setSelectedPhotoModal(kgt)}>
+                    {kgt.videoUrl ? (
+                      <video
+                        src={kgt.videoUrl}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        muted
+                        loop
+                        playsInline
+                        autoPlay
+                      />
+                    ) : (
+                      <img
+                        src={kgt.photoUrl}
+                        alt={kgt.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
                     <span className="absolute top-3 left-3 bg-emerald-800/90 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full backdrop-blur-xs shadow-xs">
                       {kgt.category}
                     </span>
+                    {kgt.videoUrl && (
+                      <span className="absolute top-3 right-3 bg-black/60 text-white p-1.5 rounded-full backdrop-blur-xs">
+                        <Play className="w-3.5 h-3.5 fill-white" />
+                      </span>
+                    )}
                     <div className="absolute bottom-3 left-3 right-3 text-white">
                       <p className="text-xs text-emerald-200 font-semibold flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5" /> {kgt.date} {kgt.time ? `• ${kgt.time}` : ''}
@@ -468,12 +484,22 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
       {selectedPhotoModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl space-y-4">
-            <div className="relative bg-black h-80 sm:h-96 flex items-center justify-center">
-              <img
-                src={selectedPhotoModal.photoUrl}
-                alt={selectedPhotoModal.title}
-                className="w-full h-full object-contain"
-              />
+            <div className="relative bg-black aspect-square flex items-center justify-center">
+              {selectedPhotoModal.videoUrl ? (
+                <video
+                  src={selectedPhotoModal.videoUrl}
+                  className="w-full h-full object-contain"
+                  controls
+                  autoPlay
+                  playsInline
+                />
+              ) : (
+                <img
+                  src={selectedPhotoModal.photoUrl}
+                  alt={selectedPhotoModal.title}
+                  className="w-full h-full object-contain"
+                />
+              )}
               <button
                 onClick={() => setSelectedPhotoModal(null)}
                 className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 backdrop-blur-md cursor-pointer transition-colors"

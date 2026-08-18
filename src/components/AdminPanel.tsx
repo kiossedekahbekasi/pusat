@@ -177,7 +177,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     time: '08:00 - 10:00 WIB',
     location: "Rumah Tahfidz Nurul A'laa",
     description: '',
-    photoUrl: ''
+    photoUrl: '',
+    videoUrl: ''
   });
 
   // Notification Toast State
@@ -747,7 +748,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       time: '08:00 - 10:00 WIB',
       location: "Rumah Tahfidz Nurul A'laa",
       description: '',
-      photoUrl: ''
+      photoUrl: '',
+      videoUrl: ''
     });
   };
 
@@ -760,7 +762,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       time: kegiatan.time || '',
       location: kegiatan.location || '',
       description: kegiatan.description,
-      photoUrl: kegiatan.photoUrl
+      photoUrl: kegiatan.photoUrl,
+      videoUrl: kegiatan.videoUrl || ''
     });
   };
 
@@ -786,6 +789,36 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setIsUploadingKegiatanPhoto(false);
       e.target.value = '';
     }
+  };
+
+  const [isUploadingKegiatanVideo, setIsUploadingKegiatanVideo] = useState(false);
+  const [kegiatanVideoUploadProgress, setKegiatanVideoUploadProgress] = useState(0);
+  const handleKegiatanVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingKegiatanVideo(true);
+    setKegiatanVideoUploadProgress(0);
+    try {
+      const url = await uploadVideoFile(file, {
+        folder: 'kegiatan-santri',
+        maxSizeMB: 40,
+        onProgress: setKegiatanVideoUploadProgress,
+      });
+      setKegiatanForm((prev) => ({ ...prev, videoUrl: url }));
+      showToast('Video kegiatan santri berhasil diunggah!');
+    } catch (err: any) {
+      alert(err?.message || 'Gagal mengunggah video.');
+    } finally {
+      setIsUploadingKegiatanVideo(false);
+      setKegiatanVideoUploadProgress(0);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveKegiatanVideo = () => {
+    const oldUrl = kegiatanForm.videoUrl;
+    setKegiatanForm((prev) => ({ ...prev, videoUrl: '' }));
+    if (oldUrl) deleteVideoByUrl(oldUrl);
   };
 
   // ---------------- STYLING HANDLERS ----------------
@@ -3011,6 +3044,46 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
               </div>
 
+              {/* Upload Video Kegiatan (opsional) */}
+              <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200 flex flex-col sm:flex-row items-center gap-4">
+                <div className="w-24 h-24 rounded-xl bg-neutral-200 border border-neutral-300 shrink-0 overflow-hidden relative group flex items-center justify-center">
+                  {kegiatanForm.videoUrl ? (
+                    <>
+                      <video src={kegiatanForm.videoUrl} className="w-full h-full object-cover" muted playsInline />
+                      <button
+                        type="button"
+                        onClick={handleRemoveKegiatanVideo}
+                        title="Hapus Video"
+                        className="absolute -top-1.5 -right-1.5 p-1 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md cursor-pointer transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </>
+                  ) : (
+                    <VideoIcon className="w-6 h-6 text-neutral-400" />
+                  )}
+                </div>
+                <div className="space-y-1.5 flex-1 text-center sm:text-left">
+                  <label className="block text-xs font-bold text-neutral-700">Video Dokumentasi Kegiatan — opsional</label>
+                  <p className="text-[11px] text-neutral-500">
+                    Kalau video diisi, halaman publik akan menampilkan video (rasio kotak 1:1 seperti Instagram) menggantikan foto. Maksimal 40MB.
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <label className="px-3.5 py-2 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 cursor-pointer transition-colors">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>
+                        {isUploadingKegiatanVideo
+                          ? `Mengunggah... ${kegiatanVideoUploadProgress}%`
+                          : kegiatanForm.videoUrl
+                          ? 'Ganti Video Kegiatan'
+                          : 'Upload Video Kegiatan'}
+                      </span>
+                      <input type="file" accept="video/*" onChange={handleKegiatanVideoUpload} disabled={isUploadingKegiatanVideo} className="hidden" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 className="px-6 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-xs cursor-pointer"
@@ -3031,7 +3104,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               {kegiatanList.map((kgt) => (
                 <div key={kgt.id} className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200 flex flex-col justify-between gap-3">
                   <div className="flex gap-4">
-                    <img src={kgt.photoUrl} alt={kgt.title} className="w-24 h-24 rounded-xl object-cover border shrink-0" />
+                    <div className="relative w-24 h-24 rounded-xl border shrink-0 overflow-hidden">
+                      <img src={kgt.photoUrl} alt={kgt.title} className="w-full h-full object-cover" />
+                      {kgt.videoUrl && (
+                        <span className="absolute bottom-1 right-1 bg-black/70 text-white rounded-full p-1">
+                          <VideoIcon className="w-3 h-3" />
+                        </span>
+                      )}
+                    </div>
                     <div className="space-y-1 min-w-0 flex-1">
                       <span className="text-[10px] font-bold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded-md uppercase">
                         {kgt.category}

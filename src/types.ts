@@ -197,6 +197,8 @@ export interface KegiatanSantri {
   location?: string;
   description: string;
   photoUrl: string;
+  /** Video dokumentasi kegiatan (opsional). Kalau diisi, video ditampilkan menggantikan foto di halaman publik. */
+  videoUrl?: string;
   createdAt: string;
 }
 
