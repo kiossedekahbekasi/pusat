@@ -1,21 +1,25 @@
 /**
- * Unggah file video ke Firebase Storage.
+ * Unggah file video ke Cloudinary.
  *
  * Video TIDAK disimpan sebagai base64 seperti foto (lihat imageUpload.ts), karena:
  * - Firestore membatasi satu dokumen maksimal ~1MB — video beberapa detik saja
  *   sudah pasti melebihi itu.
  * - localStorage juga hanya punya kuota sekitar 5-10MB per browser.
- * Jadi video diunggah ke Firebase Storage, dan yang disimpan di database hanya
- * berupa URL link ke video tersebut (string kecil, aman untuk Firestore/localStorage).
+ * Jadi video diunggah ke Cloudinary (layanan penyimpanan media), dan yang disimpan
+ * di database hanya berupa URL link ke video tersebut (string kecil, aman untuk
+ * Firestore/localStorage).
+ *
+ * Sebelumnya pakai Firebase Storage, tapi itu butuh upgrade project ke plan Blaze
+ * (perlu kartu kredit). Cloudinary dipakai sebagai gantinya karena free tier-nya
+ * tidak perlu kartu kredit sama sekali. Lihat src/lib/cloudinary.ts untuk cara setup.
  */
 
-import { getDownloadURL, ref, uploadBytesResumable, deleteObject } from 'firebase/storage';
-import { storage } from '../lib/firebase';
+import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../lib/cloudinary';
 
 export interface UploadVideoOptions {
   /** Ukuran maksimal file, dalam MB. Default 40MB. */
   maxSizeMB?: number;
-  /** Folder tujuan di Storage, mis. "hero-videos". */
+  /** Folder tujuan di Cloudinary, mis. "hero-videos". Diabaikan kalau upload preset sudah punya folder sendiri. */
   folder?: string;
   /** Dipanggil berkala dengan progres unggahan (0-100). */
   onProgress?: (percent: number) => void;
@@ -35,53 +39,69 @@ export async function uploadVideoFile(file: File, options: UploadVideoOptions = 
     );
   }
 
-  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-  const path = `${folder}/${Date.now()}_${safeName}`;
-  const storageRef = ref(storage, path);
+  if (CLOUDINARY_CLOUD_NAME === 'ISI_CLOUD_NAME_ANDA' || CLOUDINARY_UPLOAD_PRESET === 'ISI_UPLOAD_PRESET_ANDA') {
+    throw new Error(
+      'Cloudinary belum dikonfigurasi. Isi CLOUDINARY_CLOUD_NAME dan CLOUDINARY_UPLOAD_PRESET di src/lib/cloudinary.ts terlebih dahulu.'
+    );
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  if (folder) formData.append('folder', folder);
 
   return new Promise((resolve, reject) => {
-    const task = uploadBytesResumable(storageRef, file, { contentType: file.type });
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`);
 
-    task.on(
-      'state_changed',
-      (snapshot) => {
-        if (onProgress) {
-          const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-          onProgress(percent);
-        }
-      },
-      (err: any) => {
-        const code = String(err?.code || '');
-        let message = 'Gagal mengunggah video. Coba lagi beberapa saat.';
-        if (code.includes('unauthorized') || code.includes('permission')) {
-          message = 'Gagal mengunggah video: izin ditolak. Pastikan Anda sudah login sebagai admin dan Storage Rules sudah dikonfigurasi.';
-        } else if (code.includes('canceled')) {
-          message = 'Unggah video dibatalkan.';
-        } else if (code.includes('quota-exceeded')) {
-          message = 'Gagal mengunggah video: kuota penyimpanan cloud sudah penuh.';
-        }
-        reject(new Error(message));
-      },
-      async () => {
-        try {
-          const url = await getDownloadURL(task.snapshot.ref);
-          resolve(url);
-        } catch (err) {
-          reject(new Error('Video berhasil diunggah tapi gagal mengambil link-nya. Coba lagi.'));
-        }
+    xhr.upload.onprogress = (event) => {
+      if (onProgress && event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        onProgress(percent);
       }
-    );
+    };
+
+    xhr.onload = () => {
+      try {
+        const response = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300 && response.secure_url) {
+          resolve(response.secure_url as string);
+        } else {
+          const cloudinaryMessage = response?.error?.message || '';
+          let message = 'Gagal mengunggah video. Coba lagi beberapa saat.';
+          if (cloudinaryMessage.toLowerCase().includes('preset')) {
+            message = 'Gagal mengunggah video: upload preset Cloudinary belum diatur ke "Unsigned". Cek pengaturan di dashboard Cloudinary.';
+          } else if (cloudinaryMessage.toLowerCase().includes('file size') || cloudinaryMessage.toLowerCase().includes('too large')) {
+            message = 'Gagal mengunggah video: ukuran file melebihi batas yang diizinkan akun Cloudinary Anda.';
+          } else if (cloudinaryMessage) {
+            message = `Gagal mengunggah video: ${cloudinaryMessage}`;
+          }
+          reject(new Error(message));
+        }
+      } catch {
+        reject(new Error('Video mungkin berhasil diunggah tapi responsnya tidak bisa dibaca. Coba lagi.'));
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error('Gagal mengunggah video: koneksi bermasalah. Periksa internet Anda dan coba lagi.'));
+    };
+
+    xhr.send(formData);
   });
 }
 
-/** Hapus video lama dari Storage saat diganti/dihapus, supaya tidak menumpuk file tak terpakai. */
+/**
+ * Hapus video lama dari Cloudinary saat diganti/dihapus.
+ *
+ * CATATAN: Cloudinary tidak mengizinkan penghapusan file lewat unsigned upload
+ * (butuh API secret yang tidak aman disimpan di kode frontend). Jadi fungsi ini
+ * sengaja tidak melakukan apa-apa selain mencatat peringatan — file lama akan
+ * tetap tersimpan di akun Cloudinary Anda (tidak masalah untuk kuota gratis
+ * skala kios kecil, tapi kalau ingin membersihkan otomatis, ini perlu endpoint
+ * server kecil yang menyimpan API secret dengan aman).
+ */
 export async function deleteVideoByUrl(url: string): Promise<void> {
-  try {
-    if (!url || !url.includes('firebasestorage')) return;
-    const fileRef = ref(storage, url);
-    await deleteObject(fileRef);
-  } catch (err) {
-    // Bukan masalah besar kalau gagal hapus — file lama, biarkan saja.
-    console.warn('Gagal menghapus video lama dari Storage:', err);
-  }
+  if (!url || !url.includes('cloudinary')) return;
+  console.warn('Video lama di Cloudinary tidak dihapus otomatis (perlu server terpisah untuk itu). Anda bisa menghapusnya manual lewat dashboard Cloudinary jika perlu.');
 }
