@@ -84,6 +84,7 @@ export const getStoreOpenStatus = (storeInfo: StoreInfo, now: Date = new Date())
 export interface StoreStatusResult {
   isOpen: boolean;
   currentTime: string;
+  now: Date;
 }
 
 /**
@@ -109,6 +110,7 @@ export const useStoreStatus = (storeInfo: StoreInfo): StoreStatusResult => {
   return {
     isOpen: getStoreOpenStatus(storeInfo, now),
     currentTime,
+    now,
   };
 };
 

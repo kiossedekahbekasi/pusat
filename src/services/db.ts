@@ -165,6 +165,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   heroSubtitle: 'Menyediakan Beras, Minyak, Gula, Telur, Mie & Kebutuhan Pokok Dapur Eceran & Grosir Harga Distributor.',
   heroBannerImage: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=1200',
   storeLogoImage: '',
+  heroVideoUrl: '',
   navLabels: {
     catalog: 'Katalog Sembako',
     tahfidz: "Rumah Tahfidz Nurul A'laa",

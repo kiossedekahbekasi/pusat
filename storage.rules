@@ -1,0 +1,20 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Video banner & file media lain yang diunggah admin dari Panel Admin.
+    // Siapa saja boleh membaca (supaya video tampil di website publik),
+    // tapi hanya akun yang sudah login yang boleh mengunggah/menghapus.
+    match /hero-videos/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 50 * 1024 * 1024
+                   && request.resource.contentType.matches('video/.*');
+    }
+
+    // Semua path lain: tertutup total secara default.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

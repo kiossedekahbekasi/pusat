@@ -125,6 +125,8 @@ export interface SiteSettings {
   heroSubtitle: string;
   heroBannerImage: string;
   storeLogoImage: string;
+  /** URL video (disimpan di Firebase Storage) yang ditampilkan di banner utama halaman depan. Kosong = tidak ada video. */
+  heroVideoUrl?: string;
   navLabels: NavLabels;
   navOrder: NavItemConfig[];
   heroContent: HeroContent;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../services/db';
 import { compressImageFile } from '../utils/imageUpload';
+import { uploadVideoFile, deleteVideoByUrl } from '../utils/videoUpload';
 import { useStoreStatus, DAY_LABELS } from '../utils/storeStatus';
 import { 
   AdminUser, 
@@ -66,7 +67,8 @@ import {
   EyeOff,
   GripVertical,
   SlidersHorizontal,
-  Info
+  Info,
+  Video as VideoIcon
 } from 'lucide-react';
 
 /** Pratinjau real-time badge BUKA/TUTUP mengikuti jam & hari yang sedang diketik admin,
@@ -893,6 +895,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     db.saveSiteSettings({
       storeLogoImage: logoUrlInput,
       heroBannerImage: bannerUrlInput,
+      heroVideoUrl: heroVideoUrlInput,
     });
     showToast('Foto Logo Toko & Hero Banner berhasil diperbarui di seluruh website!');
   };
@@ -952,6 +955,45 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setIsUploadingBanner(false);
       e.target.value = '';
     }
+  };
+
+  // ---------------- VIDEO BANNER HANDLERS ----------------
+  // Video disimpan di Firebase Storage (bukan base64 di database) karena ukurannya
+  // jauh lebih besar dari foto — lihat src/utils/videoUpload.ts.
+  const [heroVideoUrlInput, setHeroVideoUrlInput] = useState(siteSettings.heroVideoUrl || '');
+  const [isUploadingHeroVideo, setIsUploadingHeroVideo] = useState(false);
+  const [heroVideoUploadProgress, setHeroVideoUploadProgress] = useState(0);
+
+  const handleHeroVideoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingHeroVideo(true);
+    setHeroVideoUploadProgress(0);
+    try {
+      const url = await uploadVideoFile(file, {
+        folder: 'hero-videos',
+        maxSizeMB: 40,
+        onProgress: setHeroVideoUploadProgress,
+      });
+      setHeroVideoUrlInput(url);
+      db.saveSiteSettings({ heroVideoUrl: url });
+      showToast('Video banner berhasil diunggah & disimpan!');
+    } catch (err: any) {
+      alert(err?.message || 'Gagal mengunggah video.');
+    } finally {
+      setIsUploadingHeroVideo(false);
+      setHeroVideoUploadProgress(0);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveHeroVideo = async () => {
+    if (!confirm('Hapus video banner? Banner utama akan kembali memakai gambar.')) return;
+    const oldUrl = heroVideoUrlInput;
+    setHeroVideoUrlInput('');
+    db.saveSiteSettings({ heroVideoUrl: '' });
+    showToast('Video banner dihapus.');
+    if (oldUrl) deleteVideoByUrl(oldUrl);
   };
 
   const handleAddPhotoSubmit = (e: React.FormEvent) => {
@@ -2221,7 +2263,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-6">
             <h3 className="font-bold text-lg text-neutral-900 flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-teal-600" /> Pengaturan Foto Logo & Banner
+              <ImageIcon className="w-5 h-5 text-teal-600" /> Pengaturan Foto & Video Logo / Banner
             </h3>
 
             <form onSubmit={handleSaveImages} className="space-y-4">
@@ -2283,6 +2325,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <span>{isUploadingBanner ? 'Memproses...' : 'Unggah Foto dari HP / Komputer'}</span>
                   <input type="file" accept="image/*" onChange={handleBannerFileUpload} disabled={isUploadingBanner} className="hidden" />
                 </label>
+              </div>
+
+              <div className="pt-2 border-t border-neutral-100">
+                <label className="block text-xs font-bold text-neutral-700 mb-1 flex items-center gap-1.5">
+                  <VideoIcon className="w-3.5 h-3.5 text-teal-600" /> Video Banner Utama (Hero) — opsional
+                </label>
+                <p className="text-[11px] text-neutral-500 mb-2">
+                  Kalau video diisi, banner utama di halaman depan akan menampilkan video ini (otomatis diputar, tanpa suara, berulang) menggantikan gambar statis.
+                </p>
+
+                {heroVideoUrlInput && (
+                  <div className="relative mb-2 group">
+                    <video src={heroVideoUrlInput} controls className="w-full h-40 rounded-xl object-cover border border-neutral-200 bg-black" />
+                    <button
+                      type="button"
+                      onClick={handleRemoveHeroVideo}
+                      title="Hapus Video"
+                      className="absolute top-2 right-2 p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full shadow-md cursor-pointer transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                <label className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>
+                    {isUploadingHeroVideo
+                      ? `Mengunggah... ${heroVideoUploadProgress}%`
+                      : heroVideoUrlInput
+                      ? 'Ganti Video dari HP / Komputer'
+                      : 'Unggah Video dari HP / Komputer'}
+                  </span>
+                  <input type="file" accept="video/*" onChange={handleHeroVideoFileUpload} disabled={isUploadingHeroVideo} className="hidden" />
+                </label>
+                <p className="text-[11px] text-neutral-400 mt-1.5">Maksimal 40MB. Format MP4 disarankan. Video langsung tersimpan begitu selesai diunggah.</p>
               </div>
 
               <button

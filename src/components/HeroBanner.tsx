@@ -1,7 +1,8 @@
 import React from 'react';
-import { Truck, ShieldCheck, Tag, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
+import { Truck, ShieldCheck, Tag, ArrowRight, CheckCircle2, Clock, CalendarDays } from 'lucide-react';
 import { StoreInfo, SiteSettings } from '../types';
 import { useStoreStatus } from '../utils/storeStatus';
+import { formatGregorianDate, formatHijriDate } from '../utils/hijriDate';
 
 interface HeroBannerProps {
   onExploreClick: () => void;
@@ -22,13 +23,29 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 }) => {
   // Status BUKA/TUTUP & jam berjalan dihitung otomatis dari jadwal toko (real-time,
   // ter-update sendiri setiap detik) — tidak lagi tergantung saklar manual saja.
-  const { isOpen, currentTime } = useStoreStatus(storeInfo);
+  const { isOpen, currentTime, now } = useStoreStatus(storeInfo);
+  const gregorianDate = formatGregorianDate(now);
+  const hijriDate = formatHijriDate(now);
 
   return (
     <div className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white rounded-3xl p-6 sm:p-10 shadow-lg overflow-hidden my-6">
-      {/* Dynamic background hero image or overlay */}
-      {siteSettings.heroBannerImage && (
-        <div className="absolute inset-0 z-0 opacity-20 bg-cover bg-center pointer-events-none" style={{ backgroundImage: `url(${siteSettings.heroBannerImage})` }} />
+      {/* Video banner (kalau admin sudah unggah video) — diputar otomatis, senyap, berulang,
+          jadi tetap ringan & tidak mengganggu meski tanpa suara. Kalau tidak ada video,
+          pakai gambar banner statis seperti biasa. */}
+      {siteSettings.heroVideoUrl ? (
+        <video
+          className="absolute inset-0 z-0 w-full h-full opacity-25 object-cover pointer-events-none"
+          src={siteSettings.heroVideoUrl}
+          poster={siteSettings.heroBannerImage || undefined}
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+      ) : (
+        siteSettings.heroBannerImage && (
+          <div className="absolute inset-0 z-0 opacity-20 bg-cover bg-center pointer-events-none" style={{ backgroundImage: `url(${siteSettings.heroBannerImage})` }} />
+        )
       )}
 
       {/* Decorative background circle */}
@@ -121,7 +138,16 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </span>
             <span className="text-[11px] text-emerald-300 font-semibold">WIB</span>
           </div>
-          
+
+          {/* Kalender Masehi & Hijriah, ikut ter-update otomatis setiap hari. */}
+          <div className="flex items-start gap-2 -mt-1 pb-1 border-b border-emerald-800/80">
+            <CalendarDays className="w-4 h-4 text-emerald-300 shrink-0 mt-0.5" />
+            <div className="text-xs leading-relaxed">
+              <p className="text-white font-semibold">{gregorianDate}</p>
+              {hijriDate && <p className="text-emerald-300">{hijriDate}</p>}
+            </div>
+          </div>
+
           <div className="text-sm space-y-2 text-emerald-100">
             <p className="font-semibold text-white">{storeInfo.name}</p>
             <p className="text-xs text-emerald-300">{storeInfo.operatingHours}</p>
