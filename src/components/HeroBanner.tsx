@@ -1,5 +1,5 @@
-import React from 'react';
-import { Truck, ShieldCheck, Tag, ArrowRight, CheckCircle2, Clock, CalendarDays } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Truck, ShieldCheck, Tag, ArrowRight, CheckCircle2, Clock, CalendarDays, Volume2, VolumeX } from 'lucide-react';
 import { StoreInfo, SiteSettings } from '../types';
 import { useStoreStatus } from '../utils/storeStatus';
 import { formatGregorianDate, formatHijriDate } from '../utils/hijriDate';
@@ -27,21 +27,61 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   const gregorianDate = formatGregorianDate(now);
   const hijriDate = formatHijriDate(now);
 
+  // Kontrol suara video hero secara manual. Video tetap wajib dimulai dalam
+  // kondisi "muted" karena browser modern memblokir autoplay bersuara — begitu
+  // pengunjung menekan tombol speaker, baru audionya dinyalakan.
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const nextMuted = !isMuted;
+    video.muted = nextMuted;
+    // Beberapa browser mengharuskan play() dipanggil ulang di dalam gesture
+    // klik pengguna agar audio benar-benar diizinkan untuk berbunyi.
+    if (!nextMuted) {
+      video.play().catch(() => {
+        // Kalau browser tetap menolak, biarkan video jalan tanpa suara.
+      });
+    }
+    setIsMuted(nextMuted);
+  };
+
   return (
     <div className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white rounded-3xl p-6 sm:p-10 shadow-lg overflow-hidden my-6">
-      {/* Video banner (kalau admin sudah unggah video) — diputar otomatis, senyap, berulang,
-          jadi tetap ringan & tidak mengganggu meski tanpa suara. Kalau tidak ada video,
-          pakai gambar banner statis seperti biasa. */}
+      {/* Video banner (kalau admin sudah unggah video) — diputar otomatis, senyap di awal,
+          berulang, jadi tetap ringan & tidak mengganggu. Musiknya bisa dinyalakan manual
+          lewat tombol speaker di pojok kanan atas. Kalau tidak ada video, pakai gambar
+          banner statis seperti biasa. */}
       {siteSettings.heroVideoUrl ? (
-        <video
-          className="absolute inset-0 z-0 w-full h-full opacity-25 object-cover pointer-events-none"
-          src={siteSettings.heroVideoUrl}
-          poster={siteSettings.heroBannerImage || undefined}
-          autoPlay
-          muted
-          loop
-          playsInline
-        />
+        <>
+          <video
+            ref={videoRef}
+            className="absolute inset-0 z-0 w-full h-full opacity-25 object-cover"
+            src={siteSettings.heroVideoUrl}
+            poster={siteSettings.heroBannerImage || undefined}
+            autoPlay
+            muted={isMuted}
+            loop
+            playsInline
+          />
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-label={isMuted ? 'Nyalakan suara video' : 'Matikan suara video'}
+            title={isMuted ? 'Nyalakan suara' : 'Matikan suara'}
+            className="absolute top-4 right-4 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 border border-white/20 backdrop-blur-xs text-white transition-colors cursor-pointer"
+          >
+            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
+        </>
       ) : (
         siteSettings.heroBannerImage && (
           <div className="absolute inset-0 z-0 opacity-20 bg-cover bg-center pointer-events-none" style={{ backgroundImage: `url(${siteSettings.heroBannerImage})` }} />
