@@ -34,26 +34,92 @@ const emitSyncStatus = (status: SyncStatus) => {
   syncListeners.forEach((fn) => fn(status));
 };
 
+/**
+ * Firestore MENOLAK field dengan nilai `undefined` (mis. badge: undefined saat
+ * form dikosongkan). Sebelumnya ini bikin SELURUH penyimpanan produk gagal total
+ * secara diam-diam setiap kali admin menambah/mengedit produk tanpa mengisi badge —
+ * inilah penyebab utama produk baru "hilang lagi" setelah refresh. Fungsi ini
+ * membersihkan field undefined secara rekursif sebelum data dikirim ke Firestore.
+ */
+const stripUndefinedDeep = (value: any): any => {
+  if (Array.isArray(value)) return value.map(stripUndefinedDeep);
+  if (value && typeof value === 'object') {
+    const out: Record<string, any> = {};
+    Object.keys(value).forEach((k) => {
+      const v = value[k];
+      if (v === undefined) return;
+      out[k] = stripUndefinedDeep(v);
+    });
+    return out;
+  }
+  return value;
+};
+
+/** Key localStorage tempat menyimpan "kapan terakhir data lokal ini diubah", per nama dokumen. */
+const localUpdatedAtKey = (docName: string) => `tsbu_sync_meta_${docName}`;
+
+const getLocalUpdatedAt = (docName: string): string | null => {
+  try {
+    return localStorage.getItem(localUpdatedAtKey(docName));
+  } catch {
+    return null;
+  }
+};
+
+const setLocalUpdatedAt = (docName: string, updatedAt: string) => {
+  try {
+    localStorage.setItem(localUpdatedAtKey(docName), updatedAt);
+  } catch {
+    // Kalau ini gagal juga, storage sudah benar-benar penuh — sudah ditangani di persist().
+  }
+};
+
 // Helper to sync to Firestore in background
-const saveToFirestore = async (docName: string, data: any) => {
+const saveToFirestore = async (docName: string, data: any, updatedAt: string = new Date().toISOString()) => {
   try {
     const docRef = doc(firestore, 'store_data', docName);
-    await setDoc(docRef, { data, updatedAt: new Date().toISOString() }, { merge: true });
-    emitSyncStatus({ ok: true, docName, message: 'Data tersimpan ke cloud.', at: new Date().toISOString() });
+    const cleanData = stripUndefinedDeep(data);
+    await setDoc(docRef, { data: cleanData, updatedAt }, { merge: true });
+    setLocalUpdatedAt(docName, updatedAt);
+    emitSyncStatus({ ok: true, docName, message: 'Data tersimpan ke cloud.', at: updatedAt });
   } catch (err: any) {
     const raw = String(err?.code || err?.message || err);
     // Pesan yang bisa dimengerti pengurus toko, bukan kode teknis Firebase.
-    let message = `Gagal menyimpan "${docName}" ke cloud. Data masih aman di perangkat ini.`;
+    let message = `Gagal menyimpan "${docName}" ke cloud. Data masih aman di perangkat ini dan akan otomatis dicoba lagi.`;
     if (raw.includes('permission-denied')) {
       message = `Gagal menyimpan "${docName}" ke cloud: izin ditolak. Pastikan Anda sudah login sebagai admin.`;
     } else if (raw.includes('unavailable') || raw.includes('offline')) {
       message = `Gagal menyimpan "${docName}" ke cloud: koneksi internet terputus. Data tersimpan di perangkat ini dulu.`;
     } else if (raw.includes('invalid-argument') || raw.includes('exceeds the maximum')) {
-      message = `Gagal menyimpan "${docName}": ukuran data terlalu besar (batas 1 MB per dokumen). Kurangi jumlah/ukuran foto.`;
+      message = `Gagal menyimpan "${docName}": ukuran data terlalu besar (batas 1 MB per dokumen). Kurangi jumlah/ukuran foto produk.`;
     }
     console.warn(`Firestore sync failed for ${docName}:`, err);
     emitSyncStatus({ ok: false, docName, message, at: new Date().toISOString() });
   }
+};
+
+/**
+ * Titik simpan terpusat: simpan ke localStorage (dengan penanganan galat bila
+ * penyimpanan penuh) LALU ke Firestore, dengan satu timestamp yang sama supaya
+ * listener real-time (lihat setupRealtimeSync) tahu mana data yang lebih baru
+ * dan tidak menimpa perubahan lokal yang belum sempat tersinkron ke cloud.
+ */
+const persist = (storageKey: string, docName: string, data: unknown): void => {
+  const updatedAt = new Date().toISOString();
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(data));
+    setLocalUpdatedAt(docName, updatedAt);
+  } catch (err) {
+    console.error(`Gagal menyimpan "${docName}" di perangkat ini:`, err);
+    emitSyncStatus({
+      ok: false,
+      docName,
+      message: `Gagal menyimpan "${docName}" di perangkat ini (penyimpanan browser penuh). Coba hapus beberapa produk/foto lama, lalu simpan ulang.`,
+      at: updatedAt,
+    });
+  }
+  saveToFirestore(docName, data, updatedAt);
+  notifyDBChange();
 };
 
 /**
@@ -278,7 +344,9 @@ if (typeof window !== 'undefined') {
         docRef,
         (snapshot) => {
           if (snapshot.exists()) {
-            const remoteData = snapshot.data()?.data;
+            const remoteRaw = snapshot.data();
+            const remoteData = remoteRaw?.data;
+            const remoteUpdatedAt: string | undefined = remoteRaw?.updatedAt;
             if (remoteData) {
               const localKeyMap: Record<string, string> = {
                 products: KEYS.PRODUCTS,
@@ -294,7 +362,24 @@ if (typeof window !== 'undefined') {
               };
               const storageKey = localKeyMap[key];
               if (storageKey) {
+                const localUpdatedAt = getLocalUpdatedAt(key);
+                // PENTING: kalau data lokal di perangkat ini LEBIH BARU daripada
+                // data di cloud (mis. penyimpanan ke cloud sebelumnya sempat gagal),
+                // JANGAN timpa data lokal dengan data cloud yang lebih lama.
+                // Ini adalah penyebab utama produk yang baru ditambahkan "hilang
+                // lagi" begitu halaman di-refresh. Sebagai gantinya, coba
+                // sinkronkan ulang data lokal (yang lebih baru) ke cloud.
+                if (localUpdatedAt && remoteUpdatedAt && localUpdatedAt > remoteUpdatedAt) {
+                  try {
+                    const localRaw = localStorage.getItem(storageKey);
+                    if (localRaw) saveToFirestore(key, JSON.parse(localRaw), localUpdatedAt);
+                  } catch (e) {
+                    console.warn(`Gagal mencoba sinkron ulang data lokal untuk ${key}:`, e);
+                  }
+                  return;
+                }
                 localStorage.setItem(storageKey, JSON.stringify(remoteData));
+                if (remoteUpdatedAt) setLocalUpdatedAt(key, remoteUpdatedAt);
                 notifyDBChange();
               }
             }
@@ -327,9 +412,7 @@ export const db = {
   },
 
   saveProducts(products: Product[]): void {
-    localStorage.setItem(KEYS.PRODUCTS, JSON.stringify(products));
-    saveToFirestore('products', products);
-    notifyDBChange();
+    persist(KEYS.PRODUCTS, 'products', products);
   },
 
   addProduct(product: Omit<Product, 'id'>): Product {
@@ -370,9 +453,7 @@ export const db = {
   },
 
   saveStoreInfo(info: StoreInfo): void {
-    localStorage.setItem(KEYS.STORE_INFO, JSON.stringify(info));
-    saveToFirestore('storeInfo', info);
-    notifyDBChange();
+    persist(KEYS.STORE_INFO, 'storeInfo', info);
   },
 
   // SITE SETTINGS (Font, Color, Images, Titles)
@@ -410,9 +491,7 @@ export const db = {
       footerContent: { ...current.footerContent, ...(settings.footerContent || {}) },
       aboutPageContent: { ...current.aboutPageContent, ...(settings.aboutPageContent || {}) },
     };
-    localStorage.setItem(KEYS.SETTINGS, JSON.stringify(updated));
-    saveToFirestore('settings', updated);
-    notifyDBChange();
+    persist(KEYS.SETTINGS, 'settings', updated);
   },
 
   // CUSTOM PHOTOS
@@ -438,18 +517,14 @@ export const db = {
       createdAt: new Date().toISOString(),
     };
     const updated = [newPhoto, ...photos];
-    localStorage.setItem(KEYS.PHOTOS, JSON.stringify(updated));
-    saveToFirestore('photos', updated);
-    notifyDBChange();
+    persist(KEYS.PHOTOS, 'photos', updated);
     return newPhoto;
   },
 
   deletePhoto(id: string): void {
     const photos = this.getPhotos();
     const updated = photos.filter((p) => p.id !== id);
-    localStorage.setItem(KEYS.PHOTOS, JSON.stringify(updated));
-    saveToFirestore('photos', updated);
-    notifyDBChange();
+    persist(KEYS.PHOTOS, 'photos', updated);
   },
 
   // AUTHENTICATION
@@ -502,9 +577,7 @@ export const db = {
   },
 
   saveOrders(orders: OrderDetails[]): void {
-    localStorage.setItem(KEYS.ORDERS, JSON.stringify(orders));
-    saveToFirestore('orders', orders);
-    notifyDBChange();
+    persist(KEYS.ORDERS, 'orders', orders);
   },
 
   addOrder(order: OrderDetails): void {
@@ -543,9 +616,7 @@ export const db = {
   saveTahfidzProfile(profile: Partial<TahfidzProfile>): void {
     const current = this.getTahfidzProfile();
     const updated = { ...current, ...profile };
-    localStorage.setItem(KEYS.TAHFIDZ_PROFILE, JSON.stringify(updated));
-    saveToFirestore('tahfidzProfile', updated);
-    notifyDBChange();
+    persist(KEYS.TAHFIDZ_PROFILE, 'tahfidzProfile', updated);
   },
 
   // SANTRI LIST
@@ -564,9 +635,7 @@ export const db = {
   },
 
   saveSantriList(list: Santri[]): void {
-    localStorage.setItem(KEYS.SANTRI, JSON.stringify(list));
-    saveToFirestore('santri', list);
-    notifyDBChange();
+    persist(KEYS.SANTRI, 'santri', list);
   },
 
   addSantri(item: Omit<Santri, 'id'>): Santri {
@@ -608,9 +677,7 @@ export const db = {
   },
 
   saveKegiatanList(list: KegiatanSantri[]): void {
-    localStorage.setItem(KEYS.KEGIATAN, JSON.stringify(list));
-    saveToFirestore('kegiatan', list);
-    notifyDBChange();
+    persist(KEYS.KEGIATAN, 'kegiatan', list);
   },
 
   addKegiatan(item: Omit<KegiatanSantri, 'id' | 'createdAt'>): KegiatanSantri {
@@ -652,9 +719,7 @@ export const db = {
   },
 
   saveCustomPages(list: CustomPage[]): void {
-    localStorage.setItem(KEYS.CUSTOM_PAGES, JSON.stringify(list));
-    saveToFirestore('customPages', list);
-    notifyDBChange();
+    persist(KEYS.CUSTOM_PAGES, 'customPages', list);
   },
 
   addCustomPage(item: Omit<CustomPage, 'id' | 'createdAt'>): CustomPage {
@@ -699,34 +764,21 @@ export const db = {
   saveKiosSedekahProfile(profile: Partial<KiosSedekahProfile>): void {
     const current = this.getKiosSedekahProfile();
     const updated = { ...current, ...profile };
-    localStorage.setItem(KEYS.KIOS_SEDEKAH, JSON.stringify(updated));
-    saveToFirestore('kiosSedekah', updated);
-    notifyDBChange();
+    persist(KEYS.KIOS_SEDEKAH, 'kiosSedekah', updated);
   },
 
   // RESET DATABASE
   resetToDefaults(): void {
-    localStorage.setItem(KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
-    localStorage.setItem(KEYS.STORE_INFO, JSON.stringify(STORE_INFO));
-    localStorage.setItem(KEYS.SETTINGS, JSON.stringify(DEFAULT_SITE_SETTINGS));
-    localStorage.setItem(KEYS.PHOTOS, JSON.stringify(DEFAULT_PHOTOS));
-    localStorage.setItem(KEYS.ORDERS, JSON.stringify(DEFAULT_ORDERS));
-    localStorage.setItem(KEYS.TAHFIDZ_PROFILE, JSON.stringify(DEFAULT_TAHFIDZ_PROFILE));
-    localStorage.setItem(KEYS.SANTRI, JSON.stringify(DEFAULT_SANTRI_LIST));
-    localStorage.setItem(KEYS.KEGIATAN, JSON.stringify(DEFAULT_KEGIATAN_LIST));
-    localStorage.setItem(KEYS.CUSTOM_PAGES, JSON.stringify([]));
-    localStorage.setItem(KEYS.KIOS_SEDEKAH, JSON.stringify(DEFAULT_KIOS_SEDEKAH_PROFILE));
-    saveToFirestore('products', INITIAL_PRODUCTS);
-    saveToFirestore('storeInfo', STORE_INFO);
-    saveToFirestore('settings', DEFAULT_SITE_SETTINGS);
-    saveToFirestore('photos', DEFAULT_PHOTOS);
-    saveToFirestore('orders', DEFAULT_ORDERS);
-    saveToFirestore('tahfidzProfile', DEFAULT_TAHFIDZ_PROFILE);
-    saveToFirestore('santri', DEFAULT_SANTRI_LIST);
-    saveToFirestore('kegiatan', DEFAULT_KEGIATAN_LIST);
-    saveToFirestore('customPages', []);
-    saveToFirestore('kiosSedekah', DEFAULT_KIOS_SEDEKAH_PROFILE);
-    notifyDBChange();
+    persist(KEYS.PRODUCTS, 'products', INITIAL_PRODUCTS);
+    persist(KEYS.STORE_INFO, 'storeInfo', STORE_INFO);
+    persist(KEYS.SETTINGS, 'settings', DEFAULT_SITE_SETTINGS);
+    persist(KEYS.PHOTOS, 'photos', DEFAULT_PHOTOS);
+    persist(KEYS.ORDERS, 'orders', DEFAULT_ORDERS);
+    persist(KEYS.TAHFIDZ_PROFILE, 'tahfidzProfile', DEFAULT_TAHFIDZ_PROFILE);
+    persist(KEYS.SANTRI, 'santri', DEFAULT_SANTRI_LIST);
+    persist(KEYS.KEGIATAN, 'kegiatan', DEFAULT_KEGIATAN_LIST);
+    persist(KEYS.CUSTOM_PAGES, 'customPages', []);
+    persist(KEYS.KIOS_SEDEKAH, 'kiosSedekah', DEFAULT_KIOS_SEDEKAH_PROFILE);
   },
 
   // SUBSCRIBE TO CHANGES
