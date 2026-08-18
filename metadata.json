@@ -1,6 +1,6 @@
 {
-  "name": "Toko Sembako Berkah Utama & Doa Anak Muslim",
-  "description": "Aplikasi gabungan: Toko Sembako online (eceran & grosir, paket hemat, Rumah Tahfidz, Kios Sedekah) sekaligus aplikasi edukasi 25 Doa Harian Anak Muslim dengan video animasi, audio pelafalan, studio rekam suara, dan kuis interaktif.",
-  "requestFramePermissions": ["microphone"],
+  "name": "Toko Sembako Berkah Utama",
+  "description": "Aplikasi Toko Sembako online menyediakan sembilan bahan pokok berkualitas, eceran dan grosir, paket hemat, serta informasi lengkap tentang toko.",
+  "requestFramePermissions": [],
   "majorCapabilities": []
 }

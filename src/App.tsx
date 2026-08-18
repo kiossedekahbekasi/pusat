@@ -11,7 +11,6 @@ import { Footer } from './components/Footer';
 import { TahfidzSection } from './components/TahfidzSection';
 import { KiosSedekahSection } from './components/KiosSedekahSection';
 import { CustomPageView } from './components/CustomPageView';
-import { DoaAnakApp } from './doa/DoaAnakApp';
 
 import { db } from './services/db';
 import { applyGlobalTheme } from './utils/theme';
@@ -373,9 +372,6 @@ export default function App() {
           {activeTab === 'kios_sedekah' && (
             <KiosSedekahSection kiosSedekahProfile={kiosSedekahProfile} />
           )}
-
-          {/* Doa Anak Section View (25 Doa Harian Anak Muslim) */}
-          {activeTab === 'doa_anak' && <DoaAnakApp />}
 
           {/* About Section View */}
           {activeTab === 'about' && <AboutSection storeInfo={storeInfo} photos={photos} siteSettings={siteSettings} />}

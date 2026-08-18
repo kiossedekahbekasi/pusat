@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, Search, Store, Info, Gift, PhoneCall, SlidersHorizontal, UserCheck, Shield, BookOpen, HeartHandshake, Sparkles } from 'lucide-react';
+import { ShoppingBag, Search, Store, Info, Gift, PhoneCall, SlidersHorizontal, UserCheck, Shield, BookOpen, HeartHandshake } from 'lucide-react';
 import { StoreInfo, AdminUser, SiteSettings, TahfidzProfile, CustomPage } from '../types';
 import { useStoreStatus } from '../utils/storeStatus';
 
@@ -225,25 +225,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 >
                   <Info className="w-4 h-4" />
                   <span>{siteSettings.navLabels.about}</span>
-                </button>
-              );
-            }
-            if (item.key === 'doa_anak') {
-              return (
-                <button
-                  key="doa_anak"
-                  onClick={() => setActiveTab('doa_anak')}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                    activeTab === 'doa_anak'
-                      ? 'bg-emerald-800 text-white shadow-xs font-bold'
-                      : 'text-teal-900 bg-teal-50 hover:bg-teal-100 font-semibold border border-teal-200'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4 text-teal-700" />
-                  <span>{siteSettings.navLabels.doaAnak}</span>
-                  {siteSettings.navLabels.doaAnakBadge && (
-                    <span className="bg-amber-400 text-emerald-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full uppercase">{siteSettings.navLabels.doaAnakBadge}</span>
-                  )}
                 </button>
               );
             }

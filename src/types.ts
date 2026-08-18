@@ -75,8 +75,6 @@ export interface NavLabels {
   tahfidzBadge: string;
   kiosSedekah: string;
   kiosSedekahBadge: string;
-  doaAnak: string;
-  doaAnakBadge: string;
   about: string;
   packages: string;
   packagesBadge: string;
@@ -84,7 +82,7 @@ export interface NavLabels {
   admin: string;
 }
 
-export type NavItemKey = 'catalog' | 'tahfidz' | 'kios_sedekah' | 'doa_anak' | 'about' | 'packages';
+export type NavItemKey = 'catalog' | 'tahfidz' | 'kios_sedekah' | 'about' | 'packages';
 
 export interface NavItemConfig {
   key: NavItemKey;
