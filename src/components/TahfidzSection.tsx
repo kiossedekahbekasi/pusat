@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TahfidzProfile, Santri, KegiatanSantri } from '../types';
 import { BookOpen, Award, Calendar, MapPin, Phone, MessageSquare, Search, Filter, Sparkles, GraduationCap, X, ChevronRight, User, Play } from 'lucide-react';
+import { PrayerTimesWidget } from './PrayerTimesWidget';
 
 interface TahfidzSectionProps {
   tahfidzProfile: TahfidzProfile;
@@ -156,6 +157,9 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
       {/* SUB TAB 1: PROFIL & VISI MISI */}
       {activeSubTab === 'profile' && (
         <div className="space-y-8 animate-fadeIn">
+          {/* Jadwal Waktu Sholat Bekasi */}
+          <PrayerTimesWidget />
+
           {/* About & Profile Text Card */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-4">
             <div className="flex items-center gap-3 border-b border-neutral-100 pb-4">
