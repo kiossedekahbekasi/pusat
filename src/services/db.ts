@@ -177,10 +177,13 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     admin: 'Halaman Login / Admin',
     kiosSedekah: 'Kios Sedekah',
     kiosSedekahBadge: '',
+    doaAnak: 'Doa Anak',
+    doaAnakBadge: '25 Doa',
   },
   navOrder: [
     { key: 'catalog', visible: true },
     { key: 'tahfidz', visible: true },
+    { key: 'doa_anak', visible: true },
     { key: 'about', visible: true },
     { key: 'kios_sedekah', visible: true },
     { key: 'packages', visible: true },

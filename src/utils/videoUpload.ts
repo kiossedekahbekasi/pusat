@@ -39,7 +39,7 @@ export async function uploadVideoFile(file: File, options: UploadVideoOptions = 
     );
   }
 
-  if (CLOUDINARY_CLOUD_NAME === 'ISI_CLOUD_NAME_ANDA' || CLOUDINARY_UPLOAD_PRESET === 'ISI_UPLOAD_PRESET_ANDA') {
+  if ((CLOUDINARY_CLOUD_NAME as string) === 'ISI_CLOUD_NAME_ANDA' || (CLOUDINARY_UPLOAD_PRESET as string) === 'ISI_UPLOAD_PRESET_ANDA') {
     throw new Error(
       'Cloudinary belum dikonfigurasi. Isi CLOUDINARY_CLOUD_NAME dan CLOUDINARY_UPLOAD_PRESET di src/lib/cloudinary.ts terlebih dahulu.'
     );

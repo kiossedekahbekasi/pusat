@@ -1,5 +1,5 @@
 import React from 'react';
-import { Store, Phone, MapPin, Clock, ShieldCheck, UserCheck, BookOpen, Info, HeartHandshake, Gift } from 'lucide-react';
+import { Store, Phone, MapPin, Clock, ShieldCheck, UserCheck, BookOpen, Info, HeartHandshake, Gift, Sparkles } from 'lucide-react';
 import { StoreInfo, SiteSettings, CustomPage, NavItemKey } from '../types';
 
 interface FooterProps {
@@ -33,6 +33,12 @@ const NAV_META: Record<NavItemKey, { tab: string; icon: React.ReactNode; getLabe
     icon: <HeartHandshake className="w-3.5 h-3.5" />,
     getLabel: (s) => s.navLabels.kiosSedekah,
     className: 'font-semibold text-amber-300',
+  },
+  doa_anak: {
+    tab: 'doa_anak',
+    icon: <Sparkles className="w-3.5 h-3.5" />,
+    getLabel: (s) => s.navLabels.doaAnak,
+    className: 'font-semibold text-teal-300',
   },
   packages: {
     tab: 'packages',

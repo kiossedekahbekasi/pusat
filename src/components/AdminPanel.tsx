@@ -864,6 +864,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     tahfidz: 'Rumah Tahfidz',
     about: 'Tentang Toko',
     kios_sedekah: 'Kios Sedekah',
+    doa_anak: 'Doa Anak (25 Doa Harian)',
     packages: 'Paket Hemat & Promo',
   };
   const [navOrderInput, setNavOrderInput] = useState<NavItemConfig[]>(siteSettings.navOrder);
@@ -2166,6 +2167,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     placeholder="kosongkan untuk sembunyikan"
                     value={navLabelsInput.kiosSedekahBadge}
                     onChange={(e) => setNavLabelsInput({ ...navLabelsInput, kiosSedekahBadge: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Menu: Doa Anak</label>
+                  <input
+                    type="text"
+                    required
+                    value={navLabelsInput.doaAnak}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, doaAnak: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Lencana Menu Doa Anak</label>
+                  <input
+                    type="text"
+                    placeholder="kosongkan untuk sembunyikan"
+                    value={navLabelsInput.doaAnakBadge}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, doaAnakBadge: e.target.value })}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                   />
                 </div>

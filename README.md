@@ -1,8 +1,17 @@
-# Toko Sembako Berkah Utama
+# Toko Sembako Berkah Utama & Doa Anak Muslim (Website Gabungan)
 
-Website toko sembako online: katalog produk eceran & grosir, paket hemat, keranjang &
-checkout dengan konfirmasi via WhatsApp, halaman Rumah Tahfidz, Kios Sedekah, halaman
-kustom, serta Panel Admin lengkap untuk mengelola semua isi website.
+Website gabungan dua aplikasi dalam **satu navbar tunggal**:
+
+1. **Toko Sembako** — katalog produk eceran & grosir, paket hemat, keranjang &
+   checkout dengan konfirmasi via WhatsApp, halaman Rumah Tahfidz, Kios Sedekah,
+   halaman kustom, serta Panel Admin lengkap untuk mengelola semua isi website.
+2. **Doa Anak (25 Doa Harian Anak Muslim)** — video animasi doa dipandu karakter,
+   audio pelafalan, kata per kata, studio latihan rekam suara, kartu adab Islami,
+   kuis interaktif, dan kartu hafalan yang bisa dicetak.
+
+Kedua aplikasi diakses lewat menu yang sama di navbar atas (menu **"Doa Anak"**
+berdampingan dengan Katalog, Rumah Tahfidz, Kios Sedekah, dll). Label & lencana
+menu "Doa Anak" bisa diubah lewat Panel Admin, sama seperti menu lainnya.
 
 ## Teknologi
 
@@ -12,7 +21,8 @@ kustom, serta Panel Admin lengkap untuk mengelola semua isi website.
 | Build | Vite 6 |
 | Styling | Tailwind CSS v4 (plugin Vite) |
 | Ikon | lucide-react |
-| Data & Login | Firebase (Firestore + Authentication) |
+| Animasi & konfeti | motion, canvas-confetti |
+| Data & Login | Firebase (Firestore + Authentication) — khusus bagian Toko Sembako |
 
 ## Menjalankan di komputer sendiri
 
@@ -27,7 +37,9 @@ npm run preview   # tinjau hasil build produksi
 ```
 
 Aplikasi ini **tidak memerlukan file `.env`**. Konfigurasi Firebase dibaca dari
-`src/lib/firebase.ts` / `firebase-applet-config.json`.
+`src/lib/firebase.ts` / `firebase-applet-config.json`. Bagian "Doa Anak" berjalan
+sepenuhnya di browser (Web Audio API + Speech Synthesis bawaan browser), tidak
+memerlukan Firebase maupun API key apa pun.
 
 ## Cara kerja penyimpanan data
 
@@ -39,6 +51,8 @@ Aplikasi ini **tidak memerlukan file `.env`**. Konfigurasi Firebase dibaca dari
   lalu memicu event `tsbu-db-updated` agar tampilan ikut menyegarkan.
 - Bila penyimpanan ke cloud gagal, Panel Admin menampilkan peringatan kuning
   (bukan lagi hanya pesan di console browser).
+- Progres hafalan & tab aktif di bagian "Doa Anak" tersimpan sementara di memori
+  komponen (state React) — belum disinkronkan ke Firestore/localStorage.
 
 ## Panel Admin
 
@@ -46,7 +60,8 @@ Aplikasi ini **tidak memerlukan file `.env`**. Konfigurasi Firebase dibaca dari
   (email & kata sandi) yang sudah dibuat di Firebase Console.
 - Fitur: kelola produk & stok, pesanan, informasi toko, tampilan (jenis huruf,
   ukuran huruf, warna utama, banner), galeri foto, profil Rumah Tahfidz, data santri,
-  kegiatan, Kios Sedekah, dan halaman kustom.
+  kegiatan, Kios Sedekah, halaman kustom, dan label/urutan menu navbar (termasuk
+  menu "Doa Anak").
 
 ### Membuat akun admin pertama
 
@@ -72,15 +87,27 @@ proyek Firebase ini. Untuk mengunci hanya ke admin toko:
 - Panel Admin dimuat terpisah (code splitting) supaya halaman pembeli tetap ringan.
 - Ongkos kirim: gratis untuk belanja minimal Rp 100.000 (radius < 3 km), di bawah itu
   Rp 10.000. Jarak dikonfirmasi manual oleh petugas toko lewat WhatsApp.
+- 5 gambar latar adegan video pada bagian "Doa Anak" (dari proyek asli) tidak ikut
+  ter-export ke dalam file zip sumbernya, sehingga digantikan sementara dengan
+  ilustrasi gradient SVG di `src/doa/utils/placeholderScenes.ts`. Ganti isi file ini
+  dengan gambar/foto asli bila tersedia.
 
 ## Struktur folder
 
 ```
 src/
-├── components/   Komponen tampilan (Navbar, katalog, keranjang, AdminPanel, dll.)
-├── data/         Data awal: produk, toko, tahfidz, kios sedekah
+├── components/   Komponen tampilan Toko Sembako (Navbar, katalog, keranjang, AdminPanel, dll.)
+├── data/         Data awal Toko Sembako: produk, toko, tahfidz, kios sedekah
 ├── lib/          Inisialisasi Firebase
 ├── services/     db.ts — lapisan data localStorage + Firestore
-├── utils/        Kompresi gambar & mesin tema
-└── types.ts      Definisi tipe TypeScript
+├── utils/        Kompresi gambar & mesin tema (Toko Sembako)
+├── types.ts      Definisi tipe TypeScript (Toko Sembako, termasuk key navbar "doa_anak")
+├── App.tsx       Merender bagian aktif (catalog/tahfidz/doa_anak/kios_sedekah/about/dst.)
+└── doa/          Aplikasi "25 Doa Harian Anak Muslim" (namespace terpisah)
+    ├── DoaAnakApp.tsx   Komponen utama: hero + sub-tab (video/katalog/kata/latihan/adab/kuis)
+    ├── components/      Video player, kartu adab, kuis, flashcard cetak, dll.
+    ├── data/            25 doa harian, karakter pemandu, pertanyaan kuis
+    ├── utils/           Web Audio API (efek suara, musik latar) & speech synthesis
+    └── types.ts         Definisi tipe khusus bagian Doa Anak
 ```
+

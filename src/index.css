@@ -39,6 +39,12 @@
   }
 }
 
+/* Font Arab untuk teks doa (bagian Doa Anak). */
+.font-arabic {
+  font-family: 'Amiri', 'Traditional Arabic', 'Scheherazade New', serif;
+  line-height: 1.8;
+}
+
 /* Hormati preferensi pengguna yang mengurangi animasi. */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -50,11 +56,22 @@
   }
 }
 
-/* Saat mencetak nota, sembunyikan elemen navigasi & tombol aksi. */
+/* Saat mencetak nota / kartu doa, sembunyikan elemen navigasi & tombol aksi. */
 @media print {
   header,
   footer,
   .no-print {
     display: none !important;
+  }
+
+  body:has(#printable-flashcard) {
+    background: #ffffff !important;
+  }
+
+  #printable-flashcard {
+    position: static !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 }
