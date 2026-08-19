@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { KiosSedekahProfile } from '../types';
 import { HeartHandshake, MapPin, Phone, MessageSquare, CheckCircle2, Sparkles, User, ImageIcon } from 'lucide-react';
 
@@ -7,6 +7,7 @@ interface KiosSedekahSectionProps {
 }
 
 export const KiosSedekahSection: React.FC<KiosSedekahSectionProps> = ({ kiosSedekahProfile }) => {
+  const [logoFailed, setLogoFailed] = useState(false);
   return (
     <section className="py-8 px-4 sm:px-6 max-w-7xl mx-auto space-y-8 animate-fadeIn">
       {/* Header Banner */}
@@ -18,11 +19,12 @@ export const KiosSedekahSection: React.FC<KiosSedekahSectionProps> = ({ kiosSede
           {/* Logo */}
           <div className="shrink-0 relative group">
             <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-white/10 backdrop-blur-md p-2 border-2 border-emerald-300/60 shadow-lg flex items-center justify-center overflow-hidden">
-              {kiosSedekahProfile.logoUrl ? (
+              {kiosSedekahProfile.logoUrl && !logoFailed ? (
                 <img
                   src={kiosSedekahProfile.logoUrl}
                   alt={kiosSedekahProfile.name}
                   className="w-full h-full object-cover rounded-xl"
+                  onError={() => setLogoFailed(true)}
                 />
               ) : (
                 <div className="flex flex-col items-center text-center p-2 text-emerald-200">

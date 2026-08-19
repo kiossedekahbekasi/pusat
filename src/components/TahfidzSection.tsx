@@ -18,6 +18,7 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
   const [santriSearch, setSantriSearch] = useState('');
   const [santriStatusFilter, setSantriStatusFilter] = useState<'all' | 'Aktif' | 'Mutqin' | 'Lulus'>('all');
   const [kegiatanCategoryFilter, setKegiatanCategoryFilter] = useState<string>('all');
+  const [logoFailed, setLogoFailed] = useState(false);
   const [selectedPhotoModal, setSelectedPhotoModal] = useState<KegiatanSantri | null>(null);
 
   // Filtered Santri
@@ -51,11 +52,12 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
           {/* Logo Tahfidz */}
           <div className="shrink-0 relative group">
             <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-white/10 backdrop-blur-md p-2 border-2 border-amber-400/60 shadow-lg flex items-center justify-center overflow-hidden">
-              {tahfidzProfile.logoUrl ? (
+              {tahfidzProfile.logoUrl && !logoFailed ? (
                 <img
                   src={tahfidzProfile.logoUrl}
                   alt={tahfidzProfile.name}
                   className="w-full h-full object-cover rounded-xl"
+                  onError={() => setLogoFailed(true)}
                 />
               ) : (
                 <div className="flex flex-col items-center text-center p-2 text-amber-300">

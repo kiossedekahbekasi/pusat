@@ -87,6 +87,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   src={tahfidzProfile.logoUrl}
                   alt="Logo Rumah Tahfidz"
                   className="w-10 h-10 rounded-xl object-cover border-2 border-white shadow-xs bg-white"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
                 />
               )}
             </div>

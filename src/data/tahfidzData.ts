@@ -3,7 +3,7 @@ import { TahfidzProfile, Santri, KegiatanSantri } from '../types';
 export const DEFAULT_TAHFIDZ_PROFILE: TahfidzProfile = {
   name: "Rumah Tahfidz Nurul A'laa Al-Qur'an",
   tagline: "Mencetak Generasi Rabbani Penghafal Al-Qur'an yang Berakhlakul Karimah",
-  logoUrl: "https://images.unsplash.com/photo-1609599006353-e629aa5d95d7?auto=format&fit=crop&q=80&w=400",
+  logoUrl: "",
   profilText: "Rumah Tahfidz Nurul A'laa Al-Qur'an adalah lembaga pendidikan Al-Qur'an non-formal yang berfokus pada pembentukan karakter hafiz/hafizah Al-Qur'an. Dengan metode mutqin yang terstruktur, kami mendampingi anak-anak dan remaja dalam menghafal, memahami, serta mengamalkan nilai-nilai Al-Qur'an dalam kehidupan sehari-hari.",
   visi: "Terwujudnya Generasi Qur'ani yang Hafiz, Mutqin, Berkarakter Islami, dan Bermanfaat Bagi Agama, Keluarga, serta Bangsa.",
   misi: [
