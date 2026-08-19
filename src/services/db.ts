@@ -402,8 +402,14 @@ export const db = {
     try {
       const data = localStorage.getItem(KEYS.PRODUCTS);
       if (!data) {
+        // PENTING: JANGAN saveToFirestore default di sini. Ini cuma data awal untuk
+        // tampilan sementara di perangkat yang belum pernah punya cache lokal — kalau
+        // ikut ditulis ke cloud, perangkat baru manapun (HP lain, browser lain, cache
+        // baru dibersihkan) akan MENIMPA data asli admin (produk, foto, video, dll)
+        // dengan data bawaan kosong sebelum sempat menerima data asli dari listener
+        // real-time di bawah. Proses seed-ke-cloud yang aman (cek dulu apa cloud
+        // sudah ada isinya) sudah ditangani terpisah oleh seedFirestoreIfMissing().
         localStorage.setItem(KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
-        saveToFirestore('products', INITIAL_PRODUCTS);
         return INITIAL_PRODUCTS;
       }
       return JSON.parse(data);
@@ -462,8 +468,8 @@ export const db = {
     try {
       const data = localStorage.getItem(KEYS.SETTINGS);
       if (!data) {
+        // Lihat catatan di getProducts() — jangan push default ke Firestore di sini.
         localStorage.setItem(KEYS.SETTINGS, JSON.stringify(DEFAULT_SITE_SETTINGS));
-        saveToFirestore('settings', DEFAULT_SITE_SETTINGS);
         return DEFAULT_SITE_SETTINGS;
       }
       const parsed = JSON.parse(data);
@@ -500,8 +506,8 @@ export const db = {
     try {
       const data = localStorage.getItem(KEYS.PHOTOS);
       if (!data) {
+        // Lihat catatan di getProducts() — jangan push default ke Firestore di sini.
         localStorage.setItem(KEYS.PHOTOS, JSON.stringify(DEFAULT_PHOTOS));
-        saveToFirestore('photos', DEFAULT_PHOTOS);
         return DEFAULT_PHOTOS;
       }
       return JSON.parse(data);
@@ -604,8 +610,8 @@ export const db = {
     try {
       const data = localStorage.getItem(KEYS.TAHFIDZ_PROFILE);
       if (!data) {
+        // Lihat catatan di getProducts() — jangan push default ke Firestore di sini.
         localStorage.setItem(KEYS.TAHFIDZ_PROFILE, JSON.stringify(DEFAULT_TAHFIDZ_PROFILE));
-        saveToFirestore('tahfidzProfile', DEFAULT_TAHFIDZ_PROFILE);
         return DEFAULT_TAHFIDZ_PROFILE;
       }
       return { ...DEFAULT_TAHFIDZ_PROFILE, ...JSON.parse(data) };
@@ -625,8 +631,8 @@ export const db = {
     try {
       const data = localStorage.getItem(KEYS.SANTRI);
       if (!data) {
+        // Lihat catatan di getProducts() — jangan push default ke Firestore di sini.
         localStorage.setItem(KEYS.SANTRI, JSON.stringify(DEFAULT_SANTRI_LIST));
-        saveToFirestore('santri', DEFAULT_SANTRI_LIST);
         return DEFAULT_SANTRI_LIST;
       }
       return JSON.parse(data);
@@ -667,8 +673,8 @@ export const db = {
     try {
       const data = localStorage.getItem(KEYS.KEGIATAN);
       if (!data) {
+        // Lihat catatan di getProducts() — jangan push default ke Firestore di sini.
         localStorage.setItem(KEYS.KEGIATAN, JSON.stringify(DEFAULT_KEGIATAN_LIST));
-        saveToFirestore('kegiatan', DEFAULT_KEGIATAN_LIST);
         return DEFAULT_KEGIATAN_LIST;
       }
       return JSON.parse(data);
@@ -752,8 +758,8 @@ export const db = {
     try {
       const data = localStorage.getItem(KEYS.KIOS_SEDEKAH);
       if (!data) {
+        // Lihat catatan di getProducts() — jangan push default ke Firestore di sini.
         localStorage.setItem(KEYS.KIOS_SEDEKAH, JSON.stringify(DEFAULT_KIOS_SEDEKAH_PROFILE));
-        saveToFirestore('kiosSedekah', DEFAULT_KIOS_SEDEKAH_PROFILE);
         return DEFAULT_KIOS_SEDEKAH_PROFILE;
       }
       return { ...DEFAULT_KIOS_SEDEKAH_PROFILE, ...JSON.parse(data) };
