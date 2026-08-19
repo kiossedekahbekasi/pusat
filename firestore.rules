@@ -29,7 +29,18 @@ service cloud.firestore {
     // agar akun Firebase lain tidak bisa mengubah data toko.
     match /store_data/{docId} {
       allow read: if true;
-      allow write: if isSignedIn();
+
+      // Dokumen "orders" HARUS boleh ditulis oleh pengunjung biasa (belum login),
+      // karena pesanan dibuat oleh PEMBELI di halaman publik, bukan oleh admin.
+      // Sebelumnya aturan ini mewajibkan isSignedIn() untuk SEMUA dokumen termasuk
+      // "orders", sehingga setiap kali pembeli checkout, penyimpanan ke Firestore
+      // gagal dengan "permission-denied" secara diam-diam (order.ts hanya
+      // console.warn). Akibatnya pesanan cuma tersimpan di localStorage HP/browser
+      // pembeli sendiri dan TIDAK PERNAH sampai ke Panel Admin di perangkat lain —
+      // itulah sebabnya dashboard admin selalu menampilkan "0 Pesanan" walau
+      // pembeli sudah checkout. Dokumen lain (produk, info toko, dsb.) tetap
+      // hanya boleh ditulis oleh admin yang sudah login.
+      allow write: if docId == 'orders' || isSignedIn();
 
       match /data/{itemId} {
         allow read: if true;

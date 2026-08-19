@@ -56,9 +56,19 @@ export interface OrderDetails {
   customerName: string;
   phone: string;
   address: string;
-  deliveryType: 'delivery' | 'pickup';
+  /** 'delivery' = diantar kurir toko, 'pickup' = ambil sendiri di toko,
+   *  'titip_indogrosir' = jasa titip belanja Indogrosir, ongkir/jasanya ditentukan admin manual. */
+  deliveryType: 'delivery' | 'pickup' | 'titip_indogrosir';
   paymentMethod: 'cod' | 'qris' | 'transfer';
   items: CartItem[];
+  /** Subtotal harga barang saja, belum termasuk ongkir. */
+  subtotal?: number;
+  /** Ongkos kirim yang sudah dihitung (otomatis berdasar jarak, atau diisi admin untuk jasa titip). */
+  deliveryFee?: number;
+  /** Jarak alamat pembeli ke toko dalam KM, hasil hitung otomatis (kosong bila belum/tidak bisa dihitung). */
+  distanceKm?: number | null;
+  /** Catatan status ongkir, mis. "Tambahan jarak 4-5 Km: Rp20.000" atau "Ongkir dikonfirmasi admin via WhatsApp". */
+  shippingNote?: string;
   totalAmount: number;
   date: string;
   status: 'Menunggu Konfirmasi' | 'Diproses' | 'Siap Diantar' | 'Selesai';

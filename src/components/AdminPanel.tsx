@@ -176,6 +176,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [orderSearch, setOrderSearch] = useState<string>('');
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>('all');
   const [selectedOrderForDetail, setSelectedOrderForDetail] = useState<OrderDetails | null>(null);
+  // Input ongkir manual di modal detail pesanan (dipakai untuk Jasa Titip Indogrosir
+  // atau pesanan dengan jarak > 10 Km yang butuh konfirmasi admin).
+  const [manualShippingInput, setManualShippingInput] = useState<string>('');
 
   // Tahfidz States
   const [tahfidzProfile, setTahfidzProfile] = useState<TahfidzProfile>(() => db.getTahfidzProfile());
@@ -307,6 +310,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     showToast(`Status pesanan ${orderId} berhasil diubah ke "${newStatus}"!`);
   };
 
+  // Dipakai admin untuk mengisi ongkir manual — wajib untuk pesanan "Jasa Titip
+  // Indogrosir" (harganya memang ditentukan admin) dan berguna juga untuk pesanan
+  // "Kurir Toko" yang jaraknya > 10 Km (ongkir otomatis belum bisa dihitung sistem).
+  const handleSaveManualShipping = (orderId: string) => {
+    const fee = Number(manualShippingInput.replace(/[^0-9]/g, ''));
+    if (!manualShippingInput.trim() || Number.isNaN(fee) || fee < 0) {
+      alert('Masukkan nominal ongkir yang valid (angka, boleh 0 untuk gratis).');
+      return;
+    }
+    db.updateOrderShipping(orderId, fee, `Ongkir ditentukan Admin: ${formatRupiah(fee)}`);
+    const refreshed = db.getOrders();
+    setOrders(refreshed);
+    const updatedOrder = refreshed.find((o) => o.id === orderId) || null;
+    setSelectedOrderForDetail(updatedOrder);
+    setManualShippingInput('');
+    showToast(`Ongkir pesanan ${orderId} berhasil disimpan!`);
+  };
+
   // Pesan notifikasi WA yang dikirim ke PEMBELI, disesuaikan dengan status pesanan
   // saat ini. Admin tinggal klik tombol "Notif WA" satu kali untuk membuka chat WA
   // pembeli dengan pesan yang sudah otomatis terisi sesuai status terbaru.
@@ -315,7 +336,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     const statusMessages: Record<OrderDetails['status'], string> = {
       'Menunggu Konfirmasi': `⏳ Pesanan Anda sudah kami terima dan sedang *menunggu konfirmasi* dari toko. Mohon ditunggu ya, kami akan segera memprosesnya.`,
       'Diproses': `⚙️ Pesanan Anda sedang *diproses/disiapkan* oleh toko kami. Mohon ditunggu ya.`,
-      'Siap Diantar': `🛵 Kabar baik! Pesanan Anda sudah *siap diantar/diambil*. ${order.deliveryType === 'delivery' ? 'Kurir kami akan segera mengantar ke alamat Anda.' : 'Silakan diambil di toko kami ya.'}`,
+      'Siap Diantar': `🛵 Kabar baik! Pesanan Anda sudah *siap diantar/diambil*. ${order.deliveryType === 'delivery' || order.deliveryType === 'titip_indogrosir' ? 'Kurir kami akan segera mengantar ke alamat Anda.' : 'Silakan diambil di toko kami ya.'}`,
       'Selesai': `✅ Pesanan Anda dinyatakan *selesai*. Terima kasih sudah berbelanja di ${storeInfo.name}! Semoga berkah.`,
     };
     return encodeURIComponent(greeting + statusMessages[order.status]);
@@ -1822,7 +1843,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         <td className="p-3 py-4">
                           <div className="font-semibold text-neutral-800 uppercase">{ord.paymentMethod}</div>
                           <div className="text-[11px] text-neutral-500">
-                            {ord.deliveryType === 'delivery' ? '🛵 Diantar ke Rumah' : '🏬 Ambil di Toko'}
+                            {ord.deliveryType === 'delivery'
+                              ? '🛵 Diantar ke Rumah'
+                              : ord.deliveryType === 'titip_indogrosir'
+                              ? '🧾 Jasa Titip Indogrosir'
+                              : '🏬 Ambil di Toko'}
+                            {ord.distanceKm != null ? ` · ± ${ord.distanceKm.toFixed(1)} Km` : ''}
                           </div>
                         </td>
                         <td className="p-3 py-4 font-black text-neutral-900">
@@ -1903,9 +1929,50 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 <div><strong>Nama Pembeli:</strong> {selectedOrderForDetail.customerName}</div>
                 <div><strong>No WhatsApp:</strong> {selectedOrderForDetail.phone}</div>
                 <div><strong>Alamat Tujuan:</strong> {selectedOrderForDetail.address}</div>
+                <div>
+                  <strong>Metode Kirim:</strong>{' '}
+                  {selectedOrderForDetail.deliveryType === 'delivery'
+                    ? 'Kurir Toko (Diantar)'
+                    : selectedOrderForDetail.deliveryType === 'titip_indogrosir'
+                    ? 'Jasa Titip Indogrosir'
+                    : 'Ambil Sendiri'}
+                  {selectedOrderForDetail.distanceKm != null ? ` · ± ${selectedOrderForDetail.distanceKm.toFixed(1)} Km dari toko` : ''}
+                </div>
                 <div><strong>Tipe Pembayaran:</strong> <span className="uppercase font-bold">{selectedOrderForDetail.paymentMethod}</span></div>
                 {selectedOrderForDetail.notes && <div><strong>Catatan:</strong> {selectedOrderForDetail.notes}</div>}
               </div>
+
+              {/* Peringatan & input ongkir manual — untuk Jasa Titip Indogrosir
+                  atau pesanan Kurir Toko yang jaraknya di luar jangkauan otomatis (>10 Km). */}
+              {(selectedOrderForDetail.deliveryType === 'titip_indogrosir' ||
+                (selectedOrderForDetail.deliveryType === 'delivery' && selectedOrderForDetail.shippingNote)) && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl space-y-2">
+                  <div className="flex items-start gap-1.5 text-amber-800">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>
+                      {selectedOrderForDetail.shippingNote ||
+                        'Ongkos jasa titip belum ditentukan. Isi nominalnya di bawah ini.'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder={`Ongkir saat ini: ${formatRupiah(selectedOrderForDetail.deliveryFee || 0)}`}
+                      value={manualShippingInput}
+                      onChange={(e) => setManualShippingInput(e.target.value)}
+                      className="flex-1 px-3 py-2 text-xs rounded-xl border border-amber-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSaveManualShipping(selectedOrderForDetail.id)}
+                      className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold cursor-pointer whitespace-nowrap"
+                    >
+                      Simpan Ongkir
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <div className="font-bold text-neutral-800">Daftar Sembako Dipesan:</div>

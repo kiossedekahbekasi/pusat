@@ -31,7 +31,14 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({ order, onC
       )
       .join('\n');
 
-    const text = `*PESANAN SEMBAKO BARU* 🛒\nNo. Nota: *${order.id}*\nTanggal: ${order.date}\n\n*Pelanggan:* ${order.customerName}\n*No. HP:* ${order.phone}\n*Metode:* ${order.deliveryType === 'delivery' ? 'Antar Kurir Toko' : 'Ambil di Toko'}\n*Alamat:* ${order.address}\n\n*Daftar Belanja:* \n${itemList}\n\n*Total Bayar:* *${formatRupiah(order.totalAmount)}*\n*Pembayaran:* ${order.paymentMethod.toUpperCase()}\n\nCatatan: ${order.notes || '-'}\n\nMohon diproses, terima kasih!`;
+    const deliveryLabel =
+      order.deliveryType === 'delivery'
+        ? 'Antar Kurir Toko'
+        : order.deliveryType === 'titip_indogrosir'
+        ? 'Jasa Titip Indogrosir'
+        : 'Ambil di Toko';
+
+    const text = `*PESANAN SEMBAKO BARU* 🛒\nNo. Nota: *${order.id}*\nTanggal: ${order.date}\n\n*Pelanggan:* ${order.customerName}\n*No. HP:* ${order.phone}\n*Metode:* ${deliveryLabel}\n*Alamat:* ${order.address}\n\n*Daftar Belanja:* \n${itemList}\n\n*Total Bayar:* *${formatRupiah(order.totalAmount)}*\n*Pembayaran:* ${order.paymentMethod.toUpperCase()}\n\nCatatan: ${order.notes || '-'}\n\nMohon diproses, terima kasih!`;
 
     return encodeURIComponent(text);
   };
@@ -101,13 +108,31 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({ order, onC
             <div className="flex justify-between">
               <span className="text-neutral-500">Layanan Kirim:</span>
               <span className="font-semibold">
-                {order.deliveryType === 'delivery' ? 'Kurir Antar Toko' : 'Ambil Sendiri'}
+                {order.deliveryType === 'delivery'
+                  ? 'Kurir Antar Toko'
+                  : order.deliveryType === 'titip_indogrosir'
+                  ? 'Jasa Titip Indogrosir'
+                  : 'Ambil Sendiri'}
               </span>
             </div>
-            {order.deliveryType === 'delivery' && (
+            {(order.deliveryType === 'delivery' || order.deliveryType === 'titip_indogrosir') && (
               <div className="pt-1 border-t border-neutral-200">
                 <span className="text-neutral-500 block">Alamat Tujuan:</span>
                 <span className="font-medium text-neutral-900">{order.address}</span>
+              </div>
+            )}
+            {order.deliveryType === 'delivery' && typeof order.deliveryFee === 'number' && (
+              <div className="flex justify-between pt-1 border-t border-neutral-200">
+                <span className="text-neutral-500">Ongkos Kirim:</span>
+                <span className="font-semibold">
+                  {order.deliveryFee === 0 ? 'GRATIS' : formatRupiah(order.deliveryFee)}
+                  {order.distanceKm != null ? ` (± ${order.distanceKm.toFixed(1)} Km)` : ''}
+                </span>
+              </div>
+            )}
+            {order.shippingNote && (
+              <div className="pt-1 text-amber-700 bg-amber-50 rounded-lg px-2 py-1.5 text-[11px]">
+                {order.shippingNote}
               </div>
             )}
           </div>

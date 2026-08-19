@@ -49,7 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="hidden md:inline">| Siap kirim area lokal & instan</span>
           </div>
           <div className="flex items-center gap-4 text-[11px] opacity-90">
-            <span>Gratis Ongkir Radius &lt; 3 Km (Min. Belanja Rp 100rb)</span>
+            <span>Gratis Ongkir &lt; 3 Km (Min. Rp100rb) · 4-5 Km +20rb · 6-10 Km +30rb</span>
             <a 
               href={`https://wa.me/${storeInfo.whatsapp}?text=Halo%20${encodeURIComponent(storeInfo.name)}`}
               target="_blank" 

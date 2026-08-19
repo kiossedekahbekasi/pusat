@@ -624,6 +624,28 @@ export const db = {
     this.saveOrders(updated);
   },
 
+  /**
+   * Dipakai admin untuk mengisi/mengubah ongkos kirim secara manual, khususnya
+   * untuk pesanan "Jasa Titip Indogrosir" (harganya memang ditentukan admin)
+   * atau pesanan dengan jarak > 10 Km yang butuh konfirmasi manual.
+   * totalAmount dihitung ulang otomatis = subtotal barang + ongkir baru.
+   */
+  updateOrderShipping(orderId: string, deliveryFee: number, shippingNote?: string): void {
+    const orders = this.getOrders();
+    const updated = orders.map((o) => {
+      if (o.id !== orderId) return o;
+      const subtotal = o.subtotal ?? Math.max(0, o.totalAmount - (o.deliveryFee ?? 0));
+      return {
+        ...o,
+        subtotal,
+        deliveryFee,
+        shippingNote: shippingNote ?? o.shippingNote,
+        totalAmount: subtotal + deliveryFee,
+      };
+    });
+    this.saveOrders(updated);
+  },
+
   deleteOrder(orderId: string): void {
     const orders = this.getOrders();
     const updated = orders.filter((o) => o.id !== orderId);

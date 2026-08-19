@@ -259,7 +259,7 @@ export const STORE_INFO: StoreInfo = {
     },
     {
       question: 'Berapa biaya pengiriman dan berapa lama pengantarannya?',
-      answer: 'Untuk radius < 3 Km dari toko kami memberikan GRATIS ONGKIR dengan minimal belanja Rp 100.000. Di bawah Rp 100.000 dikenakan ongkos kurir Rp 10.000, dan untuk jarak di luar radius 3 Km ongkos kirim dikonfirmasi petugas via WhatsApp. Pengiriman dilakukan oleh kurir internal toko dalam waktu 1-3 jam setelah konfirmasi.'
+      answer: 'Untuk radius < 3 Km dari toko kami memberikan GRATIS ONGKIR dengan minimal belanja Rp 100.000 (di bawah itu Rp 10.000). Jarak dihitung otomatis dari alamat yang Anda masukkan: jarak 4-5 Km dikenakan tambahan Rp 20.000, dan 6-10 Km tambahan Rp 30.000. Untuk jarak di atas 10 Km atau alamat yang belum terdeteksi otomatis, ongkos kirim dikonfirmasi petugas via WhatsApp. Kami juga melayani Jasa Titip Indogrosir dengan ongkos jasa yang ditentukan admin dan diinfokan via WhatsApp. Pengiriman dilakukan oleh kurir internal toko dalam waktu 1-3 jam setelah konfirmasi.'
     },
     {
       question: 'Apakah melayani pemesanan paket sembako untuk acara / bansos / sedekah?',
