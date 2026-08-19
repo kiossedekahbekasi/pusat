@@ -133,7 +133,7 @@ export interface AiUstadzSettings {
   enabled: boolean;
   /** API Key Google Gemini milik admin. Disimpan & dikirim dari sisi browser (client-side), sama seperti kunci Cloudinary/Firebase lain di aplikasi ini. */
   apiKey: string;
-  /** Nama model Gemini yang dipakai, mis. 'gemini-2.0-flash'. */
+  /** Nama model Gemini yang dipakai, mis. 'gemini-2.5-flash'. */
   model: string;
   /** Instruksi/persona sistem untuk AI, menentukan gaya jawab Ustadz AI. */
   systemPrompt: string;

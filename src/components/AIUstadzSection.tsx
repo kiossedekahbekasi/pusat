@@ -150,7 +150,19 @@ const ChatPanel: React.FC<{ siteSettings: SiteSettings }> = ({ siteSettings }) =
     setError('');
 
     try {
-      const model = aiUstadz.model || 'gemini-2.0-flash';
+      // Model lama (gemini-2.0-flash, gemini-1.5-flash, dll) sudah dimatikan oleh Google.
+      // Kalau konfigurasi tersimpan masih memakai model lama, otomatis pakai model yang masih aktif.
+      const DEPRECATED_MODELS = new Set([
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-lite',
+        'gemini-2.0-flash-exp',
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-8b',
+        'gemini-1.5-pro',
+        'gemini-pro',
+      ]);
+      const savedModel = aiUstadz.model?.trim();
+      const model = savedModel && !DEPRECATED_MODELS.has(savedModel) ? savedModel : 'gemini-2.5-flash';
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(aiUstadz.apiKey)}`;
       const contents = nextMessages
         .filter((m) => !(m.role === 'model' && nextMessages.indexOf(m) === 0))
