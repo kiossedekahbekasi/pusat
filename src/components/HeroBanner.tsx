@@ -1,5 +1,21 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Truck, ShieldCheck, Tag, ArrowRight, CheckCircle2, Clock, CalendarDays, Volume2, VolumeX } from 'lucide-react';
+import {
+  Truck, ShieldCheck, Tag, ArrowRight, CheckCircle2, Clock, CalendarDays, Volume2, VolumeX,
+  Star, Award, Gift, Heart, Percent, CreditCard, PackageCheck, Sparkles, Leaf, Wallet, ThumbsUp, ShoppingBag, BadgeCheck, Handshake,
+} from 'lucide-react';
+import type { HeroFeatureIconName } from '../types';
+
+// Peta nama ikon (disimpan sebagai teks di pengaturan admin) ke komponen ikon lucide-react.
+// Supaya admin bisa memilih ikon kotak keunggulan banner tanpa perlu mengubah kode.
+const HERO_FEATURE_ICON_MAP: Record<HeroFeatureIconName, React.ComponentType<{ className?: string }>> = {
+  Tag, Truck, ShieldCheck, Star, Award, Gift, Clock, Heart, Percent, CreditCard,
+  PackageCheck, Sparkles, Leaf, Wallet, ThumbsUp, ShoppingBag, BadgeCheck, Handshake,
+};
+
+function HeroFeatureIcon({ name, className }: { name?: string; className?: string }) {
+  const IconComp = (name && HERO_FEATURE_ICON_MAP[name as HeroFeatureIconName]) || Tag;
+  return <IconComp className={className} />;
+}
 import { StoreInfo, SiteSettings } from '../types';
 import { useStoreStatus } from '../utils/storeStatus';
 import { formatGregorianDate, formatHijriDate } from '../utils/hijriDate';
@@ -115,7 +131,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           {/* Quick Badges */}
           <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1 sm:pt-2 text-left">
             <div className="bg-white/10 backdrop-blur-xs p-2 sm:p-3 rounded-xl border border-white/10 flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-2.5 text-center sm:text-left">
-              <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300 shrink-0" />
+              <HeroFeatureIcon name={siteSettings.heroContent.feature1Icon} className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300 shrink-0" />
               <div>
                 <div className="text-[9px] sm:text-xs text-emerald-200 leading-tight">{siteSettings.heroContent.feature1Label}</div>
                 <div className="text-[11px] sm:text-sm font-bold leading-tight">{siteSettings.heroContent.feature1Value}</div>
@@ -123,7 +139,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </div>
 
             <div className="bg-white/10 backdrop-blur-xs p-2 sm:p-3 rounded-xl border border-white/10 flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-2.5 text-center sm:text-left">
-              <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300 shrink-0" />
+              <HeroFeatureIcon name={siteSettings.heroContent.feature2Icon} className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300 shrink-0" />
               <div>
                 <div className="text-[9px] sm:text-xs text-emerald-200 leading-tight">{siteSettings.heroContent.feature2Label}</div>
                 <div className="text-[11px] sm:text-sm font-bold leading-tight">{siteSettings.heroContent.feature2Value}</div>
@@ -131,7 +147,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             </div>
 
             <div className="bg-white/10 backdrop-blur-xs p-2 sm:p-3 rounded-xl border border-white/10 flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-2.5 text-center sm:text-left">
-              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-teal-300 shrink-0" />
+              <HeroFeatureIcon name={siteSettings.heroContent.feature3Icon} className="w-4 h-4 sm:w-5 sm:h-5 text-teal-300 shrink-0" />
               <div>
                 <div className="text-[9px] sm:text-xs text-emerald-200 leading-tight">{siteSettings.heroContent.feature3Label}</div>
                 <div className="text-[11px] sm:text-sm font-bold leading-tight">{siteSettings.heroContent.feature3Value}</div>

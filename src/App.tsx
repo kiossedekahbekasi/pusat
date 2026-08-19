@@ -11,6 +11,7 @@ import { Footer } from './components/Footer';
 import { TahfidzSection } from './components/TahfidzSection';
 import { KiosSedekahSection } from './components/KiosSedekahSection';
 import { CustomPageView } from './components/CustomPageView';
+import { AIUstadzSection } from './components/AIUstadzSection';
 
 import { db } from './services/db';
 import { applyGlobalTheme } from './utils/theme';
@@ -371,6 +372,11 @@ export default function App() {
           {/* Kios Sedekah Section View */}
           {activeTab === 'kios_sedekah' && (
             <KiosSedekahSection kiosSedekahProfile={kiosSedekahProfile} />
+          )}
+
+          {/* AI Ustadz Section View */}
+          {activeTab === 'ai_ustadz' && (
+            <AIUstadzSection siteSettings={siteSettings} />
           )}
 
           {/* About Section View */}

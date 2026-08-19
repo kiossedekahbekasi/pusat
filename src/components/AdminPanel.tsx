@@ -22,8 +22,10 @@ import {
   KiosSedekahPhoto,
   NavItemConfig,
   HeroContent,
+  HeroFeatureIconName,
   FooterContent,
-  AboutPageContent
+  AboutPageContent,
+  AiUstadzSettings
 } from '../types';
 import { 
   Lock, 
@@ -68,8 +70,47 @@ import {
   GripVertical,
   SlidersHorizontal,
   Info,
-  Video as VideoIcon
+  Video as VideoIcon,
+  Sparkles,
+  KeyRound,
+  Bot,
+  Tag,
+  ShieldCheck,
+  Star,
+  Award,
+  Gift,
+  Heart,
+  Percent,
+  CreditCard,
+  PackageCheck,
+  Leaf,
+  Wallet,
+  ThumbsUp,
+  BadgeCheck,
+  Handshake
 } from 'lucide-react';
+
+// Daftar ikon yang bisa dipilih admin untuk 3 kotak keunggulan di banner utama.
+const HERO_ICON_OPTIONS: { value: HeroFeatureIconName; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: 'Tag', label: 'Label Harga (Tag)', Icon: Tag },
+  { value: 'Truck', label: 'Truk / Pengiriman', Icon: Truck },
+  { value: 'ShieldCheck', label: 'Perisai Terverifikasi', Icon: ShieldCheck },
+  { value: 'Star', label: 'Bintang', Icon: Star },
+  { value: 'Award', label: 'Penghargaan', Icon: Award },
+  { value: 'Gift', label: 'Hadiah', Icon: Gift },
+  { value: 'Clock', label: 'Jam / Cepat', Icon: Clock },
+  { value: 'Heart', label: 'Hati / Peduli', Icon: Heart },
+  { value: 'Percent', label: 'Diskon (%)', Icon: Percent },
+  { value: 'CreditCard', label: 'Kartu / Pembayaran', Icon: CreditCard },
+  { value: 'PackageCheck', label: 'Paket Terverifikasi', Icon: PackageCheck },
+  { value: 'Sparkles', label: 'Kilauan / Spesial', Icon: Sparkles },
+  { value: 'Leaf', label: 'Daun / Alami', Icon: Leaf },
+  { value: 'Wallet', label: 'Dompet / Hemat', Icon: Wallet },
+  { value: 'ThumbsUp', label: 'Jempol / Rekomendasi', Icon: ThumbsUp },
+  { value: 'ShoppingBag', label: 'Tas Belanja', Icon: ShoppingBag },
+  { value: 'BadgeCheck', label: 'Lencana Centang', Icon: BadgeCheck },
+  { value: 'Handshake', label: 'Jabat Tangan / Berkah', Icon: Handshake },
+];
 
 /** Pratinjau real-time badge BUKA/TUTUP mengikuti jam & hari yang sedang diketik admin,
  * sebelum disimpan — supaya admin langsung tahu hasilnya tanpa harus save dulu. */
@@ -865,6 +906,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     about: 'Tentang Toko',
     kios_sedekah: 'Kios Sedekah',
     packages: 'Paket Hemat & Promo',
+    ai_ustadz: 'AI Ustadz',
   };
   const [navOrderInput, setNavOrderInput] = useState<NavItemConfig[]>(siteSettings.navOrder);
   const [draggedNavIndex, setDraggedNavIndex] = useState<number | null>(null);
@@ -890,6 +932,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   // ---------------- PAGE CONTENT HANDLERS (Hero / Footer / About) ----------------
   const [heroContentInput, setHeroContentInput] = useState<HeroContent>(siteSettings.heroContent);
+  const [aiUstadzInput, setAiUstadzInput] = useState<AiUstadzSettings>(siteSettings.aiUstadz);
+  const handleSaveAiUstadz = (e: React.FormEvent) => {
+    e.preventDefault();
+    db.saveSiteSettings({ aiUstadz: aiUstadzInput });
+    showToast('Pengaturan AI Ustadz berhasil disimpan!');
+  };
   const handleSaveHeroContent = (e: React.FormEvent) => {
     e.preventDefault();
     db.saveSiteSettings({ heroContent: heroContentInput });
@@ -2215,6 +2263,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
 
                 <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Menu: AI Ustadz</label>
+                  <input
+                    type="text"
+                    required
+                    value={navLabelsInput.aiUstadz}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, aiUstadz: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Lencana Menu AI Ustadz</label>
+                  <input
+                    type="text"
+                    placeholder="misal: Baru (kosongkan untuk sembunyikan)"
+                    value={navLabelsInput.aiUstadzBadge}
+                    onChange={(e) => setNavLabelsInput({ ...navLabelsInput, aiUstadzBadge: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+
+                <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-1">Tombol: Keranjang</label>
                   <input
                     type="text"
@@ -3451,6 +3521,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     onChange={(e) => setHeroContentInput({ ...heroContentInput, feature1Value: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                   />
+                  <div>
+                    <label className="block text-[10px] font-semibold text-neutral-500 mb-1">Ikon</label>
+                    <div className="flex items-center gap-2">
+                      <div className="shrink-0 w-9 h-9 rounded-lg bg-emerald-800 text-white flex items-center justify-center">
+                        {(() => {
+                          const Opt = HERO_ICON_OPTIONS.find((o) => o.value === heroContentInput.feature1Icon)?.Icon || Tag;
+                          return <Opt className="w-4 h-4" />;
+                        })()}
+                      </div>
+                      <select
+                        value={heroContentInput.feature1Icon}
+                        onChange={(e) => setHeroContentInput({ ...heroContentInput, feature1Icon: e.target.value as HeroFeatureIconName })}
+                        className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+                      >
+                        {HERO_ICON_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
@@ -3471,6 +3561,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     onChange={(e) => setHeroContentInput({ ...heroContentInput, feature2Value: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                   />
+                  <div>
+                    <label className="block text-[10px] font-semibold text-neutral-500 mb-1">Ikon</label>
+                    <div className="flex items-center gap-2">
+                      <div className="shrink-0 w-9 h-9 rounded-lg bg-emerald-800 text-white flex items-center justify-center">
+                        {(() => {
+                          const Opt = HERO_ICON_OPTIONS.find((o) => o.value === heroContentInput.feature2Icon)?.Icon || Truck;
+                          return <Opt className="w-4 h-4" />;
+                        })()}
+                      </div>
+                      <select
+                        value={heroContentInput.feature2Icon}
+                        onChange={(e) => setHeroContentInput({ ...heroContentInput, feature2Icon: e.target.value as HeroFeatureIconName })}
+                        className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+                      >
+                        {HERO_ICON_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2">
@@ -3491,6 +3601,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     onChange={(e) => setHeroContentInput({ ...heroContentInput, feature3Value: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
                   />
+                  <div>
+                    <label className="block text-[10px] font-semibold text-neutral-500 mb-1">Ikon</label>
+                    <div className="flex items-center gap-2">
+                      <div className="shrink-0 w-9 h-9 rounded-lg bg-emerald-800 text-white flex items-center justify-center">
+                        {(() => {
+                          const Opt = HERO_ICON_OPTIONS.find((o) => o.value === heroContentInput.feature3Icon)?.Icon || ShieldCheck;
+                          return <Opt className="w-4 h-4" />;
+                        })()}
+                      </div>
+                      <select
+                        value={heroContentInput.feature3Icon}
+                        onChange={(e) => setHeroContentInput({ ...heroContentInput, feature3Icon: e.target.value as HeroFeatureIconName })}
+                        className="w-full px-3 py-2 rounded-lg border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+                      >
+                        {HERO_ICON_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -3522,6 +3652,77 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
               >
                 Simpan Konten Halaman Depan
+              </button>
+            </form>
+          </div>
+
+          {/* AI USTADZ SETTINGS */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-xs space-y-6">
+            <div className="border-b border-neutral-100 pb-4">
+              <h3 className="font-bold text-lg text-neutral-900 flex items-center gap-2">
+                <Bot className="w-5 h-5 text-emerald-700" /> Fitur "AI Ustadz" (Chat AI + Daftar 114 Surat Al-Qur'an)
+              </h3>
+              <p className="text-xs text-neutral-500 mt-1">
+                Menu ini menampilkan chatbot tanya-jawab keislaman bertenaga AI dan direktori lengkap 114 surat Al-Qur'an (teks Arab & terjemahan) untuk pengunjung. Data surat diambil otomatis dari layanan equran.id, tidak perlu diatur di sini.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveAiUstadz} className="space-y-4">
+              <label className="flex items-center gap-3 p-3.5 bg-neutral-50 rounded-xl border border-neutral-200 cursor-pointer w-fit">
+                <input
+                  type="checkbox"
+                  checked={aiUstadzInput.enabled}
+                  onChange={(e) => setAiUstadzInput({ ...aiUstadzInput, enabled: e.target.checked })}
+                  className="w-4 h-4 accent-emerald-700 cursor-pointer"
+                />
+                <span className="text-xs font-bold text-neutral-800">Aktifkan menu AI Ustadz di navbar</span>
+              </label>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1 flex items-center gap-1.5">
+                  <KeyRound className="w-3.5 h-3.5" /> API Key Google Gemini (untuk fitur Chat AI)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Tempel API Key Gemini di sini (kosongkan jika belum punya)"
+                  value={aiUstadzInput.apiKey}
+                  onChange={(e) => setAiUstadzInput({ ...aiUstadzInput, apiKey: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                />
+                <p className="text-[11px] text-neutral-400 mt-1">
+                  Dapatkan API Key gratis di Google AI Studio (aistudio.google.com/apikey). Tanpa API Key, tab "Chat AI Ustadz" akan menampilkan pesan bahwa fitur belum aktif, namun tab "Daftar Surat" tetap berfungsi normal. Catatan: seperti kunci Cloudinary/Firebase lain di aplikasi ini, API Key ini tersimpan & dikirim dari sisi browser pengguna, jadi jangan gunakan API Key dengan kuota/biaya besar yang sensitif.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">Model AI</label>
+                <select
+                  value={aiUstadzInput.model}
+                  onChange={(e) => setAiUstadzInput({ ...aiUstadzInput, model: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+                >
+                  <option value="gemini-2.0-flash">gemini-2.0-flash (cepat & hemat, disarankan)</option>
+                  <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                  <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">Instruksi / Persona AI Ustadz</label>
+                <textarea
+                  required
+                  rows={5}
+                  value={aiUstadzInput.systemPrompt}
+                  onChange={(e) => setAiUstadzInput({ ...aiUstadzInput, systemPrompt: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Simpan Pengaturan AI Ustadz
               </button>
             </form>
           </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, Search, Store, Info, Gift, PhoneCall, SlidersHorizontal, UserCheck, Shield, BookOpen, HeartHandshake } from 'lucide-react';
+import { ShoppingBag, Search, Store, Info, Gift, PhoneCall, SlidersHorizontal, UserCheck, Shield, BookOpen, HeartHandshake, Sparkles } from 'lucide-react';
 import { StoreInfo, AdminUser, SiteSettings, TahfidzProfile, CustomPage } from '../types';
 import { useStoreStatus } from '../utils/storeStatus';
 
@@ -262,6 +262,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span>{siteSettings.navLabels.packages}</span>
                   {siteSettings.navLabels.packagesBadge && (
                     <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{siteSettings.navLabels.packagesBadge}</span>
+                  )}
+                </button>
+              );
+            }
+            if (item.key === 'ai_ustadz') {
+              return (
+                <button
+                  key="ai_ustadz"
+                  onClick={() => setActiveTab('ai_ustadz')}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                    activeTab === 'ai_ustadz'
+                      ? 'bg-emerald-800 text-white shadow-xs font-bold'
+                      : 'text-teal-900 bg-teal-50 hover:bg-teal-100 font-semibold border border-teal-200'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 text-teal-700" />
+                  <span>{siteSettings.navLabels.aiUstadz}</span>
+                  {siteSettings.navLabels.aiUstadzBadge && (
+                    <span className="bg-amber-400 text-emerald-950 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full uppercase">{siteSettings.navLabels.aiUstadzBadge}</span>
                   )}
                 </button>
               );

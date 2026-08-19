@@ -1,4 +1,4 @@
-import { Product, StoreInfo, SiteSettings, CustomPhoto, AdminUser, OrderDetails, TahfidzProfile, Santri, KegiatanSantri, CustomPage, KiosSedekahProfile } from '../types';
+import { Product, StoreInfo, SiteSettings, CustomPhoto, AdminUser, OrderDetails, TahfidzProfile, Santri, KegiatanSantri, CustomPage, KiosSedekahProfile, NavItemConfig } from '../types';
 import { INITIAL_PRODUCTS, STORE_INFO } from '../data/storeData';
 import { DEFAULT_TAHFIDZ_PROFILE, DEFAULT_SANTRI_LIST, DEFAULT_KEGIATAN_LIST } from '../data/tahfidzData';
 import { DEFAULT_KIOS_SEDEKAH_PROFILE } from '../data/kiosSedekahData';
@@ -177,6 +177,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     admin: 'Halaman Login / Admin',
     kiosSedekah: 'Kios Sedekah',
     kiosSedekahBadge: '',
+    aiUstadz: 'AI Ustadz',
+    aiUstadzBadge: 'Baru',
   },
   navOrder: [
     { key: 'catalog', visible: true },
@@ -184,15 +186,19 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     { key: 'about', visible: true },
     { key: 'kios_sedekah', visible: true },
     { key: 'packages', visible: true },
+    { key: 'ai_ustadz', visible: true },
   ],
   heroContent: {
     badgeText: 'Pusat Sembilan Bahan Pokok Resmi & Terpercaya',
     feature1Label: 'Harga Jujur',
     feature1Value: 'Ecer & Grosir',
+    feature1Icon: 'Tag',
     feature2Label: 'Pengiriman',
     feature2Value: 'Hari Yang Sama',
+    feature2Icon: 'Truck',
     feature3Label: 'Kualitas',
     feature3Value: '100% Asli & Fresh',
+    feature3Icon: 'ShieldCheck',
     primaryButtonText: 'Lihat Katalog Sembako',
     secondaryButtonText: 'Tentang Toko Kami',
   },
@@ -216,6 +222,12 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     stat2Label: 'Pelanggan Setia Harian',
     stat3Value: '100% Asli',
     stat3Label: 'Sembako Bersertifikat',
+  },
+  aiUstadz: {
+    enabled: true,
+    apiKey: '',
+    model: 'gemini-2.0-flash',
+    systemPrompt: 'Kamu adalah "AI Ustadz", asisten AI yang membantu menjawab pertanyaan seputar Islam (akidah, ibadah, akhlak, dan pengetahuan umum keislaman) dengan bahasa Indonesia yang sopan, hangat, dan mudah dipahami. Sertakan rujukan surat & ayat Al-Qur\'an yang relevan jika memungkinkan. Untuk masalah hukum fikih yang rinci/kontroversial atau kondisi personal yang rumit, sarankan pengguna untuk berkonsultasi langsung dengan ustadz/ulama tepercaya di lingkungan mereka. Jangan pernah mengklaim sebagai ulama sungguhan, dan selalu bersikap rendah hati.',
   },
 };
 
@@ -473,14 +485,26 @@ export const db = {
         return DEFAULT_SITE_SETTINGS;
       }
       const parsed = JSON.parse(data);
+      const mergedNavOrder: NavItemConfig[] =
+        parsed.navOrder && Array.isArray(parsed.navOrder) && parsed.navOrder.length > 0
+          ? [
+              ...parsed.navOrder,
+              // Tambahkan menu baru (mis. 'ai_ustadz') yang belum ada di data lama tersimpan,
+              // supaya fitur baru tetap otomatis muncul untuk toko yang sudah pernah menyimpan pengaturan.
+              ...DEFAULT_SITE_SETTINGS.navOrder.filter(
+                (def) => !parsed.navOrder.some((item: NavItemConfig) => item.key === def.key)
+              ),
+            ]
+          : DEFAULT_SITE_SETTINGS.navOrder;
       return {
         ...DEFAULT_SITE_SETTINGS,
         ...parsed,
         navLabels: { ...DEFAULT_SITE_SETTINGS.navLabels, ...(parsed.navLabels || {}) },
-        navOrder: parsed.navOrder && Array.isArray(parsed.navOrder) && parsed.navOrder.length > 0 ? parsed.navOrder : DEFAULT_SITE_SETTINGS.navOrder,
+        navOrder: mergedNavOrder,
         heroContent: { ...DEFAULT_SITE_SETTINGS.heroContent, ...(parsed.heroContent || {}) },
         footerContent: { ...DEFAULT_SITE_SETTINGS.footerContent, ...(parsed.footerContent || {}) },
         aboutPageContent: { ...DEFAULT_SITE_SETTINGS.aboutPageContent, ...(parsed.aboutPageContent || {}) },
+        aiUstadz: { ...DEFAULT_SITE_SETTINGS.aiUstadz, ...(parsed.aiUstadz || {}) },
       };
     } catch {
       return DEFAULT_SITE_SETTINGS;
@@ -497,6 +521,7 @@ export const db = {
       heroContent: { ...current.heroContent, ...(settings.heroContent || {}) },
       footerContent: { ...current.footerContent, ...(settings.footerContent || {}) },
       aboutPageContent: { ...current.aboutPageContent, ...(settings.aboutPageContent || {}) },
+      aiUstadz: { ...current.aiUstadz, ...(settings.aiUstadz || {}) },
     };
     persist(KEYS.SETTINGS, 'settings', updated);
   },

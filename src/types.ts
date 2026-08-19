@@ -78,27 +78,65 @@ export interface NavLabels {
   about: string;
   packages: string;
   packagesBadge: string;
+  aiUstadz: string;
+  aiUstadzBadge: string;
   cart: string;
   admin: string;
 }
 
-export type NavItemKey = 'catalog' | 'tahfidz' | 'kios_sedekah' | 'about' | 'packages';
+export type NavItemKey = 'catalog' | 'tahfidz' | 'kios_sedekah' | 'about' | 'packages' | 'ai_ustadz';
 
 export interface NavItemConfig {
   key: NavItemKey;
   visible: boolean;
 }
 
+/** Nama-nama ikon lucide-react yang boleh dipakai pada 3 kotak keunggulan banner utama. */
+export type HeroFeatureIconName =
+  | 'Tag'
+  | 'Truck'
+  | 'ShieldCheck'
+  | 'Star'
+  | 'Award'
+  | 'Gift'
+  | 'Clock'
+  | 'Heart'
+  | 'Percent'
+  | 'CreditCard'
+  | 'PackageCheck'
+  | 'Sparkles'
+  | 'Leaf'
+  | 'Wallet'
+  | 'ThumbsUp'
+  | 'ShoppingBag'
+  | 'BadgeCheck'
+  | 'Handshake';
+
 export interface HeroContent {
   badgeText: string;
   feature1Label: string;
   feature1Value: string;
+  feature1Icon: HeroFeatureIconName;
   feature2Label: string;
   feature2Value: string;
+  feature2Icon: HeroFeatureIconName;
   feature3Label: string;
   feature3Value: string;
+  feature3Icon: HeroFeatureIconName;
   primaryButtonText: string;
   secondaryButtonText: string;
+}
+
+/** Pengaturan fitur "AI Ustadz" (chatbot tanya-jawab keislaman + direktori 114 surat Al-Qur'an). */
+export interface AiUstadzSettings {
+  /** Tampilkan atau sembunyikan fitur AI Ustadz secara keseluruhan. */
+  enabled: boolean;
+  /** API Key Google Gemini milik admin. Disimpan & dikirim dari sisi browser (client-side), sama seperti kunci Cloudinary/Firebase lain di aplikasi ini. */
+  apiKey: string;
+  /** Nama model Gemini yang dipakai, mis. 'gemini-2.0-flash'. */
+  model: string;
+  /** Instruksi/persona sistem untuk AI, menentukan gaya jawab Ustadz AI. */
+  systemPrompt: string;
 }
 
 export interface FooterContent {
@@ -132,6 +170,7 @@ export interface SiteSettings {
   heroContent: HeroContent;
   footerContent: FooterContent;
   aboutPageContent: AboutPageContent;
+  aiUstadz: AiUstadzSettings;
 }
 
 export interface CustomPhoto {
