@@ -55,7 +55,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
   };
 
   return (
-    <div className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white rounded-3xl p-6 sm:p-10 shadow-lg overflow-hidden my-6">
+    <div className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white rounded-3xl p-5 sm:p-8 lg:p-10 shadow-lg overflow-hidden my-6">
       {/* Video banner (kalau admin sudah unggah video) — diputar otomatis, senyap di awal,
           berulang, jadi tetap ringan & tidak mengganggu. Musiknya bisa dinyalakan manual
           lewat tombol speaker di pojok kanan atas. Kalau tidak ada video, pakai gambar
@@ -65,6 +65,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           <video
             ref={videoRef}
             className="absolute inset-0 z-0 w-full h-full opacity-25 object-cover"
+            style={{ objectPosition: 'center 25%' }}
             src={siteSettings.heroVideoUrl}
             poster={siteSettings.heroBannerImage || undefined}
             autoPlay
@@ -72,14 +73,17 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
             loop
             playsInline
           />
+          {/* Overlay gradasi supaya teks tetap terbaca rapi di atas video apa pun,
+              terutama di layar HP yang sempit. */}
+          <div className="absolute inset-0 z-0 bg-gradient-to-b from-emerald-950/40 via-emerald-950/55 to-emerald-950/80 sm:from-emerald-950/25 sm:via-emerald-950/35 sm:to-emerald-950/60 pointer-events-none"></div>
           <button
             type="button"
             onClick={toggleMute}
             aria-label={isMuted ? 'Nyalakan suara video' : 'Matikan suara video'}
             title={isMuted ? 'Nyalakan suara' : 'Matikan suara'}
-            className="absolute top-4 right-4 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 border border-white/20 backdrop-blur-xs text-white transition-colors cursor-pointer"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 border border-white/20 backdrop-blur-xs text-white transition-colors cursor-pointer"
           >
-            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            {isMuted ? <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           </button>
         </>
       ) : (
@@ -92,54 +96,54 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
         {/* Left Column Content */}
-        <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-700/60 text-emerald-100 border border-emerald-500/30 text-xs font-semibold backdrop-blur-xs">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>{siteSettings.heroContent.badgeText}</span>
+        <div className="lg:col-span-7 space-y-4 sm:space-y-6 text-center lg:text-left">
+          <div className="inline-flex items-center gap-2 pr-10 sm:pr-3.5 pl-3.5 py-1.5 rounded-full bg-emerald-700/60 text-emerald-100 border border-emerald-500/30 text-[11px] sm:text-xs font-semibold backdrop-blur-xs max-w-full">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="line-clamp-1 sm:line-clamp-none">{siteSettings.heroContent.badgeText}</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-white">
+          <h1 className="text-[26px] leading-[1.15] sm:text-4xl lg:text-5xl font-extrabold tracking-tight sm:leading-tight text-white">
             {siteSettings.heroTitle || storeInfo.name}
           </h1>
 
-          <p className="text-emerald-100 text-base sm:text-lg leading-relaxed max-w-2xl">
+          <p className="text-emerald-100 text-sm sm:text-lg leading-relaxed max-w-md sm:max-w-2xl mx-auto lg:mx-0">
             {siteSettings.heroSubtitle || storeInfo.description}
           </p>
 
           {/* Quick Badges */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 text-left">
-            <div className="bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/10 flex items-center gap-2.5">
-              <Tag className="w-5 h-5 text-amber-300 shrink-0" />
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-1 sm:pt-2 text-left">
+            <div className="bg-white/10 backdrop-blur-xs p-2 sm:p-3 rounded-xl border border-white/10 flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-2.5 text-center sm:text-left">
+              <Tag className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300 shrink-0" />
               <div>
-                <div className="text-xs text-emerald-200">{siteSettings.heroContent.feature1Label}</div>
-                <div className="text-xs sm:text-sm font-bold">{siteSettings.heroContent.feature1Value}</div>
+                <div className="text-[9px] sm:text-xs text-emerald-200 leading-tight">{siteSettings.heroContent.feature1Label}</div>
+                <div className="text-[11px] sm:text-sm font-bold leading-tight">{siteSettings.heroContent.feature1Value}</div>
               </div>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/10 flex items-center gap-2.5">
-              <Truck className="w-5 h-5 text-emerald-300 shrink-0" />
+            <div className="bg-white/10 backdrop-blur-xs p-2 sm:p-3 rounded-xl border border-white/10 flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-2.5 text-center sm:text-left">
+              <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300 shrink-0" />
               <div>
-                <div className="text-xs text-emerald-200">{siteSettings.heroContent.feature2Label}</div>
-                <div className="text-xs sm:text-sm font-bold">{siteSettings.heroContent.feature2Value}</div>
+                <div className="text-[9px] sm:text-xs text-emerald-200 leading-tight">{siteSettings.heroContent.feature2Label}</div>
+                <div className="text-[11px] sm:text-sm font-bold leading-tight">{siteSettings.heroContent.feature2Value}</div>
               </div>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/10 flex items-center gap-2.5 col-span-2 sm:col-span-1">
-              <ShieldCheck className="w-5 h-5 text-teal-300 shrink-0" />
+            <div className="bg-white/10 backdrop-blur-xs p-2 sm:p-3 rounded-xl border border-white/10 flex flex-col sm:flex-row items-center sm:items-center gap-1 sm:gap-2.5 text-center sm:text-left">
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-teal-300 shrink-0" />
               <div>
-                <div className="text-xs text-emerald-200">{siteSettings.heroContent.feature3Label}</div>
-                <div className="text-xs sm:text-sm font-bold">{siteSettings.heroContent.feature3Value}</div>
+                <div className="text-[9px] sm:text-xs text-emerald-200 leading-tight">{siteSettings.heroContent.feature3Label}</div>
+                <div className="text-[11px] sm:text-sm font-bold leading-tight">{siteSettings.heroContent.feature3Value}</div>
               </div>
             </div>
           </div>
 
           {/* Buttons */}
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-3 sm:pt-4">
             <button
               onClick={onExploreClick}
-              className="px-6 py-3.5 rounded-xl bg-amber-400 text-neutral-950 font-bold hover:bg-amber-300 transition-colors shadow-md flex items-center gap-2 group cursor-pointer text-sm"
+              className="px-6 py-3 sm:py-3.5 rounded-xl bg-amber-400 text-neutral-950 font-bold hover:bg-amber-300 transition-colors shadow-md flex items-center justify-center gap-2 group cursor-pointer text-sm"
             >
               <span>{siteSettings.heroContent.primaryButtonText}</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -147,7 +151,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
 
             <button
               onClick={onAboutClick}
-              className="px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold transition-colors border border-white/20 flex items-center gap-2 cursor-pointer text-sm"
+              className="px-6 py-3 sm:py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold transition-colors border border-white/20 flex items-center justify-center gap-2 cursor-pointer text-sm"
             >
               <span>{siteSettings.heroContent.secondaryButtonText}</span>
             </button>
@@ -155,7 +159,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         </div>
 
         {/* Right Column Highlights */}
-        <div className="lg:col-span-5 bg-emerald-950/70 rounded-2xl p-6 border border-emerald-500/20 backdrop-blur-md space-y-4">
+        <div className="lg:col-span-5 bg-emerald-950/70 rounded-2xl p-5 sm:p-6 border border-emerald-500/20 backdrop-blur-md space-y-3 sm:space-y-4">
           <div className="flex items-center justify-between border-b border-emerald-800/80 pb-3">
             <div className="flex items-center gap-2 font-bold text-amber-300 text-sm">
               <Clock className="w-4 h-4" /> Jam Operasional Toko
