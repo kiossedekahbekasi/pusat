@@ -305,9 +305,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   };
 
   // ---------------- ORDERS HANDLERS ----------------
-  const handleUpdateOrderStatus = (orderId: string, newStatus: OrderDetails['status']) => {
-    db.updateOrderStatus(orderId, newStatus);
-    showToast(`Status pesanan ${orderId} berhasil diubah ke "${newStatus}"!`);
+  // Saat status pesanan diubah oleh admin (lewat dropdown), sistem otomatis
+  // membuka tab WhatsApp ke nomor pembeli dengan pesan notifikasi yang sudah
+  // terisi sesuai status terbaru. Admin cukup klik "Kirim" di WhatsApp untuk
+  // benar-benar mengirim pesannya (WhatsApp tidak mengizinkan pengiriman
+  // otomatis tanpa interaksi pengguna lewat link wa.me/API gratis).
+  const handleUpdateOrderStatus = (order: OrderDetails, newStatus: OrderDetails['status']) => {
+    db.updateOrderStatus(order.id, newStatus);
+    showToast(`Status pesanan ${order.id} berhasil diubah ke "${newStatus}"!`);
+    handleNotifyCustomer({ ...order, status: newStatus });
   };
 
   // Dipakai admin untuk mengisi ongkir manual — wajib untuk pesanan "Jasa Titip
@@ -1857,7 +1863,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         <td className="p-3 py-4">
                           <select
                             value={ord.status}
-                            onChange={(e) => handleUpdateOrderStatus(ord.id, e.target.value as any)}
+                            onChange={(e) => handleUpdateOrderStatus(ord, e.target.value as any)}
                             className={`px-2.5 py-1 rounded-lg text-xs font-bold border focus:outline-none cursor-pointer ${
                               ord.status === 'Menunggu Konfirmasi'
                                 ? 'bg-amber-50 text-amber-800 border-amber-300'
