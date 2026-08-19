@@ -29,7 +29,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'qris' | 'transfer'>('cod');
   const [notes, setNotes] = useState('');
   const [step, setStep] = useState<'cart' | 'checkout'>('cart');
 
@@ -54,6 +53,21 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       currency: 'IDR',
       maximumFractionDigits: 0,
     }).format(num);
+  };
+
+  // Pesan WhatsApp otomatis yang dikirim ke Toko begitu pesanan baru dibuat,
+  // supaya admin langsung tahu ada pesanan tanpa harus buka Panel Admin dulu.
+  const generateAdminOrderMessage = (order: OrderDetails) => {
+    const itemList = order.items
+      .map(
+        (item, idx) =>
+          `${idx + 1}. ${item.product.name} x${item.quantity} ${item.product.unit} (${item.selectedUnitType === 'grosir' ? 'Grosir' : 'Eceran'})`
+      )
+      .join('\n');
+
+    const text = `*PESANAN SEMBAKO BARU* 🛒\nNo. Nota: *${order.id}*\nTanggal: ${order.date}\n\n*Pelanggan:* ${order.customerName}\n*No. HP:* ${order.phone}\n*Metode:* ${order.deliveryType === 'delivery' ? 'Antar Kurir Toko' : 'Ambil di Toko'}\n*Alamat:* ${order.address}\n\n*Daftar Belanja:*\n${itemList}\n\n*Total Bayar:* *${formatRupiah(order.totalAmount)}*\n*Pembayaran:* COD / Tunai di Tempat\n\nCatatan: ${order.notes || '-'}\n\nMohon diproses, terima kasih!`;
+
+    return encodeURIComponent(text);
   };
 
   const subtotal = cartItems.reduce((acc, item) => {
@@ -87,7 +101,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       phone,
       address: deliveryType === 'delivery' ? address : `Ambil Langsung di ${storeInfo.name}`,
       deliveryType,
-      paymentMethod,
+      paymentMethod: 'cod',
       items: [...cartItems],
       totalAmount: grandTotal,
       date: new Date().toLocaleDateString('id-ID', {
@@ -102,6 +116,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     };
 
     onCompleteOrder(newOrder);
+
+    // Langsung buka WhatsApp Toko dengan pesan pesanan baru yang sudah terisi otomatis,
+    // supaya pesanan langsung "terkoneksi" ke admin tanpa perlu klik tombol lagi.
+    // Dipanggil langsung (bukan lewat setTimeout/promise) supaya browser tidak
+    // memblokirnya sebagai popup, karena ini masih dalam alur klik tombol submit pengguna.
+    const adminWhatsappNumber = (storeInfo.whatsapp || '').replace(/\D/g, '');
+    if (adminWhatsappNumber) {
+      window.open(`https://wa.me/${adminWhatsappNumber}?text=${generateAdminOrderMessage(newOrder)}`, '_blank');
+    }
 
     // Bersihkan form supaya pesanan berikutnya mulai dari kosong.
     setCustomerName('');
@@ -341,47 +364,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 </div>
               </div>
 
-              {/* Payment Method Selector */}
+              {/* Payment Method Info (COD saja) */}
               <div className="space-y-2 pt-2">
                 <label className="text-xs font-bold text-neutral-700 uppercase tracking-wider block">
                   3. Metode Pembayaran:
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('cod')}
-                    className={`p-2.5 rounded-xl border text-center text-xs font-semibold transition-all cursor-pointer ${
-                      paymentMethod === 'cod'
-                        ? 'border-emerald-700 bg-emerald-50 text-emerald-900 font-bold'
-                        : 'border-neutral-200 bg-white hover:bg-neutral-50'
-                    }`}
-                  >
-                    💵 Tunai / COD
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('qris')}
-                    className={`p-2.5 rounded-xl border text-center text-xs font-semibold transition-all cursor-pointer ${
-                      paymentMethod === 'qris'
-                        ? 'border-emerald-700 bg-emerald-50 text-emerald-900 font-bold'
-                        : 'border-neutral-200 bg-white hover:bg-neutral-50'
-                    }`}
-                  >
-                    📱 QRIS
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('transfer')}
-                    className={`p-2.5 rounded-xl border text-center text-xs font-semibold transition-all cursor-pointer ${
-                      paymentMethod === 'transfer'
-                        ? 'border-emerald-700 bg-emerald-50 text-emerald-900 font-bold'
-                        : 'border-neutral-200 bg-white hover:bg-neutral-50'
-                    }`}
-                  >
-                    🏦 Bank Transfer
-                  </button>
+                <div className="p-3 rounded-xl border-2 border-emerald-700 bg-emerald-50 text-emerald-900 text-xs font-bold flex items-center gap-2">
+                  💵 Tunai / COD (Bayar di Tempat saat barang diterima)
                 </div>
               </div>
 

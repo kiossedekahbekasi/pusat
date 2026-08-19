@@ -87,7 +87,8 @@ import {
   Wallet,
   ThumbsUp,
   BadgeCheck,
-  Handshake
+  Handshake,
+  PhoneCall
 } from 'lucide-react';
 
 // Daftar ikon yang bisa dipilih admin untuk 3 kotak keunggulan di banner utama.
@@ -304,6 +305,29 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleUpdateOrderStatus = (orderId: string, newStatus: OrderDetails['status']) => {
     db.updateOrderStatus(orderId, newStatus);
     showToast(`Status pesanan ${orderId} berhasil diubah ke "${newStatus}"!`);
+  };
+
+  // Pesan notifikasi WA yang dikirim ke PEMBELI, disesuaikan dengan status pesanan
+  // saat ini. Admin tinggal klik tombol "Notif WA" satu kali untuk membuka chat WA
+  // pembeli dengan pesan yang sudah otomatis terisi sesuai status terbaru.
+  const buildCustomerStatusMessage = (order: OrderDetails): string => {
+    const greeting = `Halo *${order.customerName}*, ini update pesanan Anda di *${storeInfo.name}*.\nNo. Nota: *${order.id}*\n\n`;
+    const statusMessages: Record<OrderDetails['status'], string> = {
+      'Menunggu Konfirmasi': `⏳ Pesanan Anda sudah kami terima dan sedang *menunggu konfirmasi* dari toko. Mohon ditunggu ya, kami akan segera memprosesnya.`,
+      'Diproses': `⚙️ Pesanan Anda sedang *diproses/disiapkan* oleh toko kami. Mohon ditunggu ya.`,
+      'Siap Diantar': `🛵 Kabar baik! Pesanan Anda sudah *siap diantar/diambil*. ${order.deliveryType === 'delivery' ? 'Kurir kami akan segera mengantar ke alamat Anda.' : 'Silakan diambil di toko kami ya.'}`,
+      'Selesai': `✅ Pesanan Anda dinyatakan *selesai*. Terima kasih sudah berbelanja di ${storeInfo.name}! Semoga berkah.`,
+    };
+    return encodeURIComponent(greeting + statusMessages[order.status]);
+  };
+
+  const handleNotifyCustomer = (order: OrderDetails) => {
+    const customerNumber = (order.phone || '').replace(/\D/g, '');
+    if (!customerNumber) {
+      alert('Nomor WhatsApp pembeli tidak valid/kosong.');
+      return;
+    }
+    window.open(`https://wa.me/${customerNumber}?text=${buildCustomerStatusMessage(order)}`, '_blank');
   };
 
   const handleDeleteOrder = (orderId: string, customerName: string) => {
@@ -1826,6 +1850,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         </td>
                         <td className="p-3 py-4 text-right space-x-2">
                           <button
+                            onClick={() => handleNotifyCustomer(ord)}
+                            className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
+                            title="Kirim Notifikasi Status via WhatsApp ke Pembeli"
+                          >
+                            <PhoneCall className="w-3.5 h-3.5" /> Notif WA
+                          </button>
+                          <button
                             onClick={() => setSelectedOrderForDetail(ord)}
                             className="p-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-lg font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
                             title="Detail Pesanan"
@@ -1900,6 +1931,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             </div>
 
             <div className="pt-3 border-t border-neutral-100 flex justify-end gap-2">
+              <button
+                onClick={() => handleNotifyCustomer(selectedOrderForDetail)}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <PhoneCall className="w-3.5 h-3.5" /> Notif WA ke Pembeli
+              </button>
               <button
                 onClick={() => setSelectedOrderForDetail(null)}
                 className="px-4 py-2 bg-neutral-100 text-neutral-800 font-bold rounded-xl text-xs cursor-pointer"
