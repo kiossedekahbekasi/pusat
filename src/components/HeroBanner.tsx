@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import {
   Truck, ShieldCheck, Tag, ArrowRight, CheckCircle2, Clock, CalendarDays, Volume2, VolumeX,
-  Star, Award, Gift, Heart, Percent, CreditCard, PackageCheck, Sparkles, Leaf, Wallet, ThumbsUp, ShoppingBag, BadgeCheck, Handshake,
+  Star, Award, Gift, Heart, Percent, CreditCard, PackageCheck, Sparkles, Leaf, Wallet, ThumbsUp, ShoppingBag, BadgeCheck, Handshake, MapPin,
 } from 'lucide-react';
 import type { HeroFeatureIconName } from '../types';
 
@@ -211,8 +211,9 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
           <div className="text-sm space-y-2 text-emerald-100">
             <p className="font-semibold text-white">{storeInfo.name}</p>
             <p className="text-xs text-emerald-300">{storeInfo.operatingHours}</p>
-            <p className="text-xs leading-relaxed pt-1 text-emerald-200">
-              📍 {storeInfo.address}
+            <p className="text-xs leading-relaxed pt-1 text-emerald-200 flex items-start gap-1.5">
+              <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span>{storeInfo.address}</span>
             </p>
           </div>
 

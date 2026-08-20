@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Trash2, ShoppingBag, Truck, Store, ArrowRight, Phone, MapPin, User, CheckCircle2, PackageSearch, LocateFixed, AlertTriangle } from 'lucide-react';
+import { X, Trash2, ShoppingBag, Truck, Store, ArrowRight, Phone, MapPin, User, CheckCircle2, PackageSearch, LocateFixed, AlertTriangle, Banknote } from 'lucide-react';
 import { CartItem, OrderDetails, StoreInfo } from '../types';
 
 // Titik acuan toko (hasil konversi Plus Code QXCR+HQ6, Jl. Kp. Kandang, RT.002/RW.008,
@@ -162,7 +162,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             order.distanceKm != null ? ` (± ${order.distanceKm.toFixed(1)} Km dari toko)` : ''
           }${order.shippingNote ? `\n*Catatan Ongkir:* ${order.shippingNote}` : ''}`;
 
-    const text = `*PESANAN SEMBAKO BARU* 🛒\nNo. Nota: *${order.id}*\nTanggal: ${order.date}\n\n*Pelanggan:* ${order.customerName}\n*No. HP:* ${order.phone}\n*Metode:* ${deliveryLabel}\n*Alamat:* ${order.address}${ongkirLine}\n\n*Daftar Belanja:*\n${itemList}\n\n*Total Bayar:* *${formatRupiah(order.totalAmount)}*\n*Pembayaran:* COD / Tunai di Tempat\n\nCatatan: ${order.notes || '-'}\n\nMohon diproses, terima kasih!`;
+    const text = `*PESANAN SEMBAKO BARU*\nNo. Nota: *${order.id}*\nTanggal: ${order.date}\n\n*Pelanggan:* ${order.customerName}\n*No. HP:* ${order.phone}\n*Metode:* ${deliveryLabel}\n*Alamat:* ${order.address}${ongkirLine}\n\n*Daftar Belanja:*\n${itemList}\n\n*Total Bayar:* *${formatRupiah(order.totalAmount)}*\n*Pembayaran:* COD / Tunai di Tempat\n\nCatatan: ${order.notes || '-'}\n\nMohon diproses, terima kasih!`;
 
     return encodeURIComponent(text);
   };
@@ -571,7 +571,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   3. Metode Pembayaran:
                 </label>
                 <div className="p-3 rounded-xl border-2 border-emerald-700 bg-emerald-50 text-emerald-900 text-xs font-bold flex items-center gap-2">
-                  💵 Tunai / COD (Bayar di Tempat saat barang diterima)
+                  <Banknote className="w-4 h-4 shrink-0" />
+                  Tunai / COD (Bayar di Tempat saat barang diterima)
                 </div>
               </div>
 

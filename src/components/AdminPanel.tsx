@@ -89,7 +89,9 @@ import {
   ThumbsUp,
   BadgeCheck,
   Handshake,
-  PhoneCall
+  PhoneCall,
+  Bike,
+  Receipt,
 } from 'lucide-react';
 
 // Daftar ikon yang bisa dipilih admin untuk 3 kotak keunggulan di banner utama.
@@ -193,7 +195,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [pageForm, setPageForm] = useState<{ title: string; content: string; icon: string }>({
     title: '',
     content: '',
-    icon: '📄',
+    icon: '',
   });
 
   // Kios Sedekah State
@@ -357,10 +359,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const buildCustomerStatusMessage = (order: OrderDetails): string => {
     const greeting = `Halo *${order.customerName}*, ini update pesanan Anda di *${storeInfo.name}*.\nNo. Nota: *${order.id}*\n\n`;
     const statusMessages: Record<OrderDetails['status'], string> = {
-      'Menunggu Konfirmasi': `⏳ Pesanan Anda sudah kami terima dan sedang *menunggu konfirmasi* dari toko. Mohon ditunggu ya, kami akan segera memprosesnya.`,
-      'Diproses': `⚙️ Pesanan Anda sedang *diproses/disiapkan* oleh toko kami. Mohon ditunggu ya.`,
-      'Siap Diantar': `🛵 Kabar baik! Pesanan Anda sudah *siap diantar/diambil*. ${order.deliveryType === 'delivery' || order.deliveryType === 'titip_indogrosir' ? 'Kurir kami akan segera mengantar ke alamat Anda.' : 'Silakan diambil di toko kami ya.'}`,
-      'Selesai': `✅ Pesanan Anda dinyatakan *selesai*. Terima kasih sudah berbelanja di ${storeInfo.name}! Semoga berkah.`,
+      'Menunggu Konfirmasi': `Pesanan Anda sudah kami terima dan sedang *menunggu konfirmasi* dari toko. Mohon ditunggu, kami akan segera memprosesnya.`,
+      'Diproses': `Pesanan Anda sedang *diproses/disiapkan* oleh toko kami. Mohon ditunggu.`,
+      'Siap Diantar': `Kabar baik, pesanan Anda sudah *siap diantar/diambil*. ${order.deliveryType === 'delivery' || order.deliveryType === 'titip_indogrosir' ? 'Kurir kami akan segera mengantar ke alamat Anda.' : 'Silakan diambil di toko kami.'}`,
+      'Selesai': `Pesanan Anda dinyatakan *selesai*. Terima kasih sudah berbelanja di ${storeInfo.name}.`,
     };
     return encodeURIComponent(greeting + statusMessages[order.status]);
   };
@@ -873,7 +875,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // ---------------- CUSTOM PAGES HANDLERS ----------------
   const resetPageForm = () => {
     setEditingPage(null);
-    setPageForm({ title: '', content: '', icon: '📄' });
+    setPageForm({ title: '', content: '', icon: '' });
   };
 
   const handleSavePage = (e: React.FormEvent) => {
@@ -895,7 +897,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const handleStartEditPage = (page: CustomPage) => {
     setEditingPage(page);
-    setPageForm({ title: page.title, content: page.content, icon: page.icon || '📄' });
+    setPageForm({ title: page.title, content: page.content, icon: page.icon || '' });
   };
 
   const handleDeletePage = (id: string, title: string) => {
@@ -1950,16 +1952,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         </td>
                         <td className="p-3 py-4">
                           <div className="font-bold text-neutral-900">{ord.customerName}</div>
-                          <div className="text-[11px] text-emerald-700">📱 {ord.phone}</div>
+                          <div className="text-[11px] text-emerald-700 inline-flex items-center gap-1">
+                            <PhoneCall className="w-3 h-3" /> {ord.phone}
+                          </div>
                         </td>
                         <td className="p-3 py-4">
                           <div className="font-semibold text-neutral-800 uppercase">{ord.paymentMethod}</div>
-                          <div className="text-[11px] text-neutral-500">
+                          <div className="text-[11px] text-neutral-500 inline-flex items-center gap-1">
+                            {ord.deliveryType === 'delivery' ? (
+                              <Bike className="w-3 h-3 shrink-0" />
+                            ) : ord.deliveryType === 'titip_indogrosir' ? (
+                              <Receipt className="w-3 h-3 shrink-0" />
+                            ) : (
+                              <Store className="w-3 h-3 shrink-0" />
+                            )}
                             {ord.deliveryType === 'delivery'
-                              ? '🛵 Diantar ke Rumah'
+                              ? 'Diantar ke Rumah'
                               : ord.deliveryType === 'titip_indogrosir'
-                              ? '🧾 Jasa Titip Indogrosir'
-                              : '🏬 Ambil di Toko'}
+                              ? 'Jasa Titip Indogrosir'
+                              : 'Ambil di Toko'}
                             {ord.distanceKm != null ? ` · ± ${ord.distanceKm.toFixed(1)} Km` : ''}
                           </div>
                         </td>
@@ -1980,10 +1991,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                 : 'bg-emerald-50 text-emerald-800 border-emerald-300'
                             }`}
                           >
-                            <option value="Menunggu Konfirmasi">⏳ Menunggu Konfirmasi</option>
-                            <option value="Diproses">⚙️ Diproses</option>
-                            <option value="Siap Diantar">🛵 Siap Diantar / Diambil</option>
-                            <option value="Selesai">✅ Selesai</option>
+                            <option value="Menunggu Konfirmasi">Menunggu Konfirmasi</option>
+                            <option value="Diproses">Diproses</option>
+                            <option value="Siap Diantar">Siap Diantar / Diambil</option>
+                            <option value="Selesai">Selesai</option>
                           </select>
                         </td>
                         <td className="p-3 py-4 text-right space-x-2">
@@ -2175,13 +2186,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     onChange={(e) => setProdCategory(e.target.value as any)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-300 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
                   >
-                    <option value="beras">🌾 Beras & Padi</option>
-                    <option value="minyak">🍶 Minyak Goreng</option>
-                    <option value="gula_telur">🥚 Gula & Telur</option>
-                    <option value="tepung_bumbu">🧂 Tepung & Bumbu</option>
-                    <option value="mie_makanan">🍜 Mie & Makanan</option>
-                    <option value="susu_minuman">🥛 Susu & Minuman</option>
-                    <option value="paket_hemat">🎁 Paket Hemat</option>
+                    <option value="beras">Beras & Padi</option>
+                    <option value="minyak">Minyak Goreng</option>
+                    <option value="gula_telur">Gula & Telur</option>
+                    <option value="tepung_bumbu">Tepung & Bumbu</option>
+                    <option value="mie_makanan">Mie & Makanan</option>
+                    <option value="susu_minuman">Susu & Minuman</option>
+                    <option value="paket_hemat">Paket Hemat</option>
                   </select>
                 </div>
 
@@ -4723,10 +4734,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">Ikon (emoji)</label>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Ikon (opsional)</label>
                   <input
                     type="text"
                     maxLength={4}
+                    placeholder="📄"
                     value={pageForm.icon}
                     onChange={(e) => setPageForm({ ...pageForm, icon: e.target.value })}
                     className="w-20 px-3.5 py-2.5 rounded-xl border border-neutral-300 text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
@@ -4769,7 +4781,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   <div key={page.id} className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200 flex flex-col justify-between gap-3">
                     <div className="space-y-1">
                       <h4 className="font-bold text-sm text-neutral-900 flex items-center gap-1.5">
-                        <span>{page.icon || '📄'}</span> {page.title}
+                        {page.icon ? <span>{page.icon}</span> : <FileText className="w-3.5 h-3.5" />} {page.title}
                       </h4>
                       <p className="text-xs text-neutral-600 line-clamp-3 whitespace-pre-line">{page.content}</p>
                     </div>

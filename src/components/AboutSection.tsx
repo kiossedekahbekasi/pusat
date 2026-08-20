@@ -10,7 +10,10 @@ import {
   Scale, 
   BadgePercent,
   MessageSquare,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Banknote,
+  Smartphone,
+  Landmark,
 } from 'lucide-react';
 import { StoreInfo, CustomPhoto, SiteSettings } from '../types';
 
@@ -242,14 +245,14 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ storeInfo, photos, s
               Metode Pembayaran Diterima:
             </div>
             <div className="flex flex-wrap gap-2 text-xs">
-              <span className="px-3 py-1 bg-neutral-100 text-neutral-700 font-semibold rounded-lg border border-neutral-200">
-                💵 Tunai (COD)
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-neutral-100 text-neutral-700 font-semibold rounded-lg border border-neutral-200">
+                <Banknote className="w-3.5 h-3.5" /> Tunai (COD)
               </span>
-              <span className="px-3 py-1 bg-neutral-100 text-neutral-700 font-semibold rounded-lg border border-neutral-200">
-                📱 QRIS All Payment
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-neutral-100 text-neutral-700 font-semibold rounded-lg border border-neutral-200">
+                <Smartphone className="w-3.5 h-3.5" /> QRIS All Payment
               </span>
-              <span className="px-3 py-1 bg-neutral-100 text-neutral-700 font-semibold rounded-lg border border-neutral-200">
-                🏦 Transfer BCA / BRI / Mandiri
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-neutral-100 text-neutral-700 font-semibold rounded-lg border border-neutral-200">
+                <Landmark className="w-3.5 h-3.5" /> Transfer BCA / BRI / Mandiri
               </span>
             </div>
           </div>

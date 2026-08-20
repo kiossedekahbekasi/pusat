@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, Search, Store, Info, Gift, PhoneCall, SlidersHorizontal, UserCheck, Shield, BookOpen, HeartHandshake, Sparkles } from 'lucide-react';
+import { ShoppingBag, Search, Store, Info, Gift, PhoneCall, SlidersHorizontal, UserCheck, Shield, BookOpen, HeartHandshake, Sparkles, X, FileText } from 'lucide-react';
 import { StoreInfo, AdminUser, SiteSettings, TahfidzProfile, CustomPage } from '../types';
 import { useStoreStatus } from '../utils/storeStatus';
 
@@ -120,9 +120,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-600 bg-neutral-200 rounded-full w-4 h-4 flex items-center justify-center"
+                  aria-label="Bersihkan pencarian"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 bg-neutral-200 rounded-full w-4 h-4 flex items-center justify-center"
                 >
-                  ✕
+                  <X className="w-2.5 h-2.5" />
                 </button>
               )}
             </div>
@@ -302,7 +303,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-neutral-600 hover:bg-neutral-100'
               }`}
             >
-              <span>{page.icon || '📄'}</span>
+              <span className="inline-flex items-center justify-center w-3.5 h-3.5 shrink-0">
+                {page.icon || <FileText className="w-3.5 h-3.5" />}
+              </span>
               <span>{page.title}</span>
             </button>
           ))}

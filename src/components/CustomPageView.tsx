@@ -15,7 +15,9 @@ export const CustomPageView: React.FC<CustomPageViewProps> = ({ page }) => {
           <span>Halaman Informasi</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight flex items-center gap-3">
-          <span>{page.icon || '📄'}</span>
+          <span className="inline-flex items-center justify-center shrink-0">
+            {page.icon || <FileText className="w-8 h-8 text-emerald-300" />}
+          </span>
           <span>{page.title}</span>
         </h1>
       </div>

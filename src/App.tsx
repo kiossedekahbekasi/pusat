@@ -16,7 +16,21 @@ import { AIUstadzSection } from './components/AIUstadzSection';
 import { db } from './services/db';
 import { applyGlobalTheme } from './utils/theme';
 import { Product, CartItem, OrderDetails, StoreInfo, SiteSettings, CustomPhoto, AdminUser, TahfidzProfile, Santri, KegiatanSantri, Guru, CustomPage, KiosSedekahProfile } from './types';
-import { SlidersHorizontal, Tag, Info } from 'lucide-react';
+import { SlidersHorizontal, Tag, Info, LayoutGrid, Wheat, Droplet, Egg, Cookie, Soup, Milk, Gift } from 'lucide-react';
+import type { ComponentType } from 'react';
+
+// Ikon kategori produk. Sebelumnya memakai emoji polos di label; ikon vektor
+// tampil lebih rapi dan konsisten di semua perangkat/OS dibanding emoji.
+const CATEGORY_ICONS: Record<string, ComponentType<{ className?: string }>> = {
+  all: LayoutGrid,
+  beras: Wheat,
+  minyak: Droplet,
+  gula_telur: Egg,
+  tepung_bumbu: Cookie,
+  mie_makanan: Soup,
+  susu_minuman: Milk,
+  paket_hemat: Gift,
+};
 
 // Panel Admin adalah komponen terbesar dan hanya dibutuhkan pengurus toko,
 // jadi dimuat terpisah (lazy) agar halaman pembeli jauh lebih cepat dibuka.
@@ -126,13 +140,13 @@ export default function App() {
 
   const categories = [
     { id: 'all', label: 'Semua Sembako' },
-    { id: 'beras', label: '🌾 Beras & Padi' },
-    { id: 'minyak', label: '🍶 Minyak Goreng' },
-    { id: 'gula_telur', label: '🥚 Gula & Telur' },
-    { id: 'tepung_bumbu', label: '🧂 Tepung & Bumbu' },
-    { id: 'mie_makanan', label: '🍜 Mie & Makanan' },
-    { id: 'susu_minuman', label: '🥛 Susu & Minuman' },
-    { id: 'paket_hemat', label: '🎁 Paket Hemat' },
+    { id: 'beras', label: 'Beras & Padi' },
+    { id: 'minyak', label: 'Minyak Goreng' },
+    { id: 'gula_telur', label: 'Gula & Telur' },
+    { id: 'tepung_bumbu', label: 'Tepung & Bumbu' },
+    { id: 'mie_makanan', label: 'Mie & Makanan' },
+    { id: 'susu_minuman', label: 'Susu & Minuman' },
+    { id: 'paket_hemat', label: 'Paket Hemat' },
   ];
 
   // Cart Handlers
@@ -276,19 +290,23 @@ export default function App() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200 pb-4">
                   {/* Category Pills */}
                   <div className="flex flex-wrap items-center gap-2 py-1">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => setSelectedCategory(cat.id)}
-                        className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                          selectedCategory === cat.id
-                            ? 'bg-emerald-800 text-white shadow-xs'
-                            : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
-                        }`}
-                      >
-                        {cat.label}
-                      </button>
-                    ))}
+                    {categories.map((cat) => {
+                      const CategoryIcon = CATEGORY_ICONS[cat.id] || LayoutGrid;
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => setSelectedCategory(cat.id)}
+                          className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                            selectedCategory === cat.id
+                              ? 'bg-emerald-800 text-white shadow-xs'
+                              : 'bg-white text-neutral-700 hover:bg-neutral-100 border border-neutral-200'
+                          }`}
+                        >
+                          <CategoryIcon className="w-3.5 h-3.5 shrink-0" />
+                          {cat.label}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {/* Sort Filter */}

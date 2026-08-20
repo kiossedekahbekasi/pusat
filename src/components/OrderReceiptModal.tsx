@@ -38,7 +38,7 @@ export const OrderReceiptModal: React.FC<OrderReceiptModalProps> = ({ order, onC
         ? 'Jasa Titip Indogrosir'
         : 'Ambil di Toko';
 
-    const text = `*PESANAN SEMBAKO BARU* 🛒\nNo. Nota: *${order.id}*\nTanggal: ${order.date}\n\n*Pelanggan:* ${order.customerName}\n*No. HP:* ${order.phone}\n*Metode:* ${deliveryLabel}\n*Alamat:* ${order.address}\n\n*Daftar Belanja:* \n${itemList}\n\n*Total Bayar:* *${formatRupiah(order.totalAmount)}*\n*Pembayaran:* ${order.paymentMethod.toUpperCase()}\n\nCatatan: ${order.notes || '-'}\n\nMohon diproses, terima kasih!`;
+    const text = `*PESANAN SEMBAKO BARU*\nNo. Nota: *${order.id}*\nTanggal: ${order.date}\n\n*Pelanggan:* ${order.customerName}\n*No. HP:* ${order.phone}\n*Metode:* ${deliveryLabel}\n*Alamat:* ${order.address}\n\n*Daftar Belanja:* \n${itemList}\n\n*Total Bayar:* *${formatRupiah(order.totalAmount)}*\n*Pembayaran:* ${order.paymentMethod.toUpperCase()}\n\nCatatan: ${order.notes || '-'}\n\nMohon diproses, terima kasih!`;
 
     return encodeURIComponent(text);
   };

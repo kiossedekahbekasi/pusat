@@ -127,7 +127,7 @@ export const AIUstadzSection: React.FC<AIUstadzSectionProps> = ({ siteSettings }
 const ChatPanel: React.FC<{ siteSettings: SiteSettings }> = ({ siteSettings }) => {
   const { aiUstadz } = siteSettings;
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: 'Assalamu\'alaikum! Saya AI Ustadz. Silakan tanyakan seputar ilmu keislaman, doa, atau ayat Al-Qur\'an yang ingin Anda pahami lebih lanjut. 🌙' },
+    { role: 'model', text: 'Assalamu\'alaikum! Saya AI Ustadz. Silakan tanyakan seputar ilmu keislaman, doa, atau ayat Al-Qur\'an yang ingin Anda pahami lebih lanjut.' },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);

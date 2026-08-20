@@ -1,5 +1,5 @@
 import React from 'react';
-import { Store, Phone, MapPin, Clock, ShieldCheck, UserCheck, BookOpen, Info, HeartHandshake, Gift, Sparkles } from 'lucide-react';
+import { Store, Phone, MapPin, Clock, ShieldCheck, UserCheck, BookOpen, Info, HeartHandshake, Gift, Sparkles, FileText } from 'lucide-react';
 import { StoreInfo, SiteSettings, CustomPage, NavItemKey } from '../types';
 
 interface FooterProps {
@@ -102,7 +102,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateTab, storeInfo, siteSe
                     onClick={() => onNavigateTab(page.id)}
                     className="hover:text-emerald-400 transition-colors cursor-pointer flex items-center gap-1.5"
                   >
-                    <span>{page.icon || '📄'}</span>
+                    <span className="inline-flex items-center justify-center w-3.5 h-3.5 shrink-0">
+                      {page.icon || <FileText className="w-3.5 h-3.5" />}
+                    </span>
                     <span>{page.title}</span>
                   </button>
                 </li>
