@@ -3,7 +3,7 @@ import { db } from '../services/db';
 import { compressImageFile } from '../utils/imageUpload';
 import { uploadVideoFile, deleteVideoByUrl } from '../utils/videoUpload';
 import { useStoreStatus, DAY_LABELS } from '../utils/storeStatus';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { 
   AdminUser, 
   SiteSettings, 
@@ -468,6 +468,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     });
     return days;
   })();
+
+  /**
+   * Grafik stok gudang SAAT INI per produk (bukan riwayat pergerakan seperti di atas,
+   * melainkan snapshot jumlah stok yang tersisa sekarang untuk tiap produk).
+   * Diurutkan dari stok paling sedikit ke paling banyak, supaya produk yang menipis
+   * langsung terlihat di sisi kiri grafik.
+   */
+  const currentStockChartData = [...products]
+    .sort((a, b) => a.stock - b.stock)
+    .map((p) => ({
+      name: p.name.length > 18 ? `${p.name.slice(0, 18)}…` : p.name,
+      fullName: p.name,
+      stock: p.stock,
+      unit: p.unit,
+    }));
 
   // ---------------- EXPORT HANDLERS (CSV, PDF, JSON) ----------------
   const handleExportOrdersCSV = () => {
@@ -1924,6 +1939,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               )}
               <p className="text-[11px] text-neutral-400 text-center">Stok masuk = restock admin. Stok keluar = terjual otomatis + penyesuaian manual.</p>
             </div>
+          </div>
+
+          {/* Grafik Stok Saat Ini (snapshot jumlah stok tersisa per produk) */}
+          <div className="bg-white rounded-3xl p-6 border border-neutral-200 shadow-xs space-y-4">
+            <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+              <BarChart3 className="w-5 h-5 text-amber-700" />
+              <h3 className="font-bold text-base text-neutral-900">Grafik Stok Gudang Saat Ini</h3>
+            </div>
+            {currentStockChartData.length === 0 ? (
+              <p className="text-xs text-neutral-500 text-center py-10">Belum ada produk di katalog.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={Math.max(220, currentStockChartData.length * 34)}>
+                <BarChart
+                  data={currentStockChartData}
+                  layout="vertical"
+                  margin={{ top: 5, right: 20, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 10 }} stroke="#a3a3a3" />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    tick={{ fontSize: 10 }}
+                    stroke="#a3a3a3"
+                    width={140}
+                  />
+                  <Tooltip
+                    formatter={(value, _name, item) => [`${value} ${item?.payload?.unit ?? ''}`, 'Stok Saat Ini']}
+                    labelFormatter={(_label, payload) => payload?.[0]?.payload?.fullName ?? _label}
+                    labelStyle={{ fontWeight: 700, fontSize: 12 }}
+                    contentStyle={{ fontSize: 12, borderRadius: 12, border: '1px solid #e5e5e5' }}
+                  />
+                  <Bar dataKey="stock" radius={[0, 4, 4, 0]} name="stock">
+                    {currentStockChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.stock < 10 ? '#e11d48' : '#2563eb'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+            <p className="text-[11px] text-neutral-400 text-center">
+              Diurutkan dari stok paling sedikit ke paling banyak. Batang <span className="text-rose-600 font-bold">merah</span> = stok kritis (di bawah 10 unit).
+            </p>
           </div>
 
           {/* Quick Actions & Recent Orders Summary */}
