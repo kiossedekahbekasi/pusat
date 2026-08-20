@@ -20,6 +20,7 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
   const [kegiatanCategoryFilter, setKegiatanCategoryFilter] = useState<string>('all');
   const [logoFailed, setLogoFailed] = useState(false);
   const [selectedPhotoModal, setSelectedPhotoModal] = useState<KegiatanSantri | null>(null);
+  const [selectedSantriModal, setSelectedSantriModal] = useState<Santri | null>(null);
 
   // Filtered Santri
   const filteredSantri = santriList.filter((s) => {
@@ -326,7 +327,10 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
                 >
                   <div className="flex items-start gap-4">
                     {/* Santri Avatar */}
-                    <div className="relative shrink-0">
+                    <div
+                      className="relative shrink-0 cursor-pointer"
+                      onClick={() => setSelectedSantriModal(santri)}
+                    >
                       <img
                         src={santri.photoUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=400'}
                         alt={santri.name}
@@ -526,6 +530,70 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
               <p className="text-xs text-neutral-700 pt-2 leading-relaxed">
                 {selectedPhotoModal.description}
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL FOTO SANTRI RESOLUSI PENUH */}
+      {selectedSantriModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setSelectedSantriModal(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative bg-black aspect-square flex items-center justify-center">
+              <img
+                src={selectedSantriModal.photoUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=400'}
+                alt={selectedSantriModal.name}
+                className="w-full h-full object-cover"
+              />
+              <button
+                onClick={() => setSelectedSantriModal(null)}
+                className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 backdrop-blur-md cursor-pointer transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <span className={`absolute bottom-4 right-4 text-[11px] font-extrabold px-2.5 py-1 rounded-lg text-white ${
+                selectedSantriModal.status === 'Mutqin' ? 'bg-amber-500' : selectedSantriModal.status === 'Aktif' ? 'bg-emerald-600' : 'bg-neutral-500'
+              }`}>
+                {selectedSantriModal.status}
+              </span>
+            </div>
+
+            <div className="px-6 pb-6 space-y-3">
+              <div>
+                <p className="text-[10px] font-mono text-emerald-800 font-bold tracking-wider">{selectedSantriModal.nis}</p>
+                <h3 className="text-xl font-bold text-neutral-900">{selectedSantriModal.name}</h3>
+                <p className="text-xs text-neutral-500">
+                  {selectedSantriModal.gender === 'L' ? 'Santriwan' : 'Santriwati'} • {selectedSantriModal.age} Tahun
+                </p>
+              </div>
+
+              <div className="bg-emerald-50/80 rounded-2xl p-3 border border-emerald-100 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-emerald-800">Pencapaian Hafalan</p>
+                  <p className="text-sm font-extrabold text-emerald-950">
+                    {selectedSantriModal.hafalanJuz === 30 ? "30 Juz (Khatam Mutqin)" : `${selectedSantriModal.hafalanJuz} Juz Al-Qur'an`}
+                  </p>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-emerald-800 text-amber-300 font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                  {selectedSantriModal.hafalanJuz} JZ
+                </div>
+              </div>
+
+              <div className="text-[11px] text-neutral-600 space-y-1 pt-1 border-t border-neutral-100">
+                <p className="flex justify-between">
+                  <span className="text-neutral-400">Wali Santri:</span>
+                  <strong className="text-neutral-800">{selectedSantriModal.wali}</strong>
+                </p>
+                {selectedSantriModal.notes && (
+                  <p className="text-neutral-500 italic pt-1">"{selectedSantriModal.notes}"</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
