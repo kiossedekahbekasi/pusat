@@ -243,6 +243,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         hour: '2-digit',
         minute: '2-digit',
       }),
+      createdAt: new Date().toISOString(),
       status: 'Menunggu Konfirmasi',
       notes,
     };

@@ -200,6 +200,9 @@ export default function App() {
 
   const handleCompleteOrder = (orderDetails: OrderDetails) => {
     db.addOrder(orderDetails);
+    // Setiap pesanan baru langsung mengurangi stok gudang tiap produk yang dibeli,
+    // dan mencatatnya sebagai pengeluaran stok untuk grafik dashboard admin.
+    db.recordSale(orderDetails.items, orderDetails.id);
     setCompletedOrder(orderDetails);
     setCart([]);
     setIsCartOpen(false);

@@ -71,8 +71,26 @@ export interface OrderDetails {
   shippingNote?: string;
   totalAmount: number;
   date: string;
+  /** Timestamp ISO (mis. new Date().toISOString()) saat pesanan dibuat.
+   *  Dipakai untuk mengelompokkan penjualan per hari di grafik dashboard,
+   *  karena `date` di atas sudah diformat teks Indonesia dan sulit diurai ulang. */
+  createdAt?: string;
   status: 'Menunggu Konfirmasi' | 'Diproses' | 'Siap Diantar' | 'Selesai';
   notes?: string;
+}
+
+/** Catatan riwayat perubahan stok gudang: 'masuk' = restock/penambahan stok,
+ *  'keluar' = stok berkurang karena penjualan atau penyesuaian manual admin. */
+export interface StockMovement {
+  id: string;
+  productId: string;
+  productName: string;
+  unit: string;
+  type: 'masuk' | 'keluar';
+  qty: number;
+  note: string;
+  /** Timestamp ISO saat pergerakan stok terjadi. */
+  createdAt: string;
 }
 
 export type FontFamilyType = 'Plus Jakarta Sans' | 'Inter' | 'Poppins' | 'Playfair Display' | 'Roboto' | 'Comic Neue';

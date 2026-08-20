@@ -3,6 +3,7 @@ import { db } from '../services/db';
 import { compressImageFile } from '../utils/imageUpload';
 import { uploadVideoFile, deleteVideoByUrl } from '../utils/videoUpload';
 import { useStoreStatus, DAY_LABELS } from '../utils/storeStatus';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { 
   AdminUser, 
   SiteSettings, 
@@ -26,7 +27,8 @@ import {
   HeroFeatureIconName,
   FooterContent,
   AboutPageContent,
-  AiUstadzSettings
+  AiUstadzSettings,
+  StockMovement
 } from '../types';
 import { 
   Lock, 
@@ -92,6 +94,7 @@ import {
   PhoneCall,
   Bike,
   Receipt,
+  TrendingUp,
 } from 'lucide-react';
 
 // Daftar ikon yang bisa dipilih admin untuk 3 kotak keunggulan di banner utama.
@@ -201,6 +204,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   // Kios Sedekah State
   const [kiosSedekahProfile, setKiosSedekahProfile] = useState<KiosSedekahProfile>(() => db.getKiosSedekahProfile());
 
+  // Riwayat pergerakan stok (pemasukan/pengeluaran) — untuk grafik dashboard
+  const [stockMovements, setStockMovements] = useState<StockMovement[]>(() => db.getStockMovements());
+
   // Editing Santri State
   const [editingSantri, setEditingSantri] = useState<Santri | null>(null);
   const [santriForm, setSantriForm] = useState<Omit<Santri, 'id'>>({
@@ -263,6 +269,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setKegiatanList(db.getKegiatanList());
       setCustomPages(db.getCustomPages());
       setKiosSedekahProfile(db.getKiosSedekahProfile());
+      setStockMovements(db.getStockMovements());
     });
     return () => unsubscribe();
   }, []);
@@ -403,6 +410,64 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const pendingOrdersCount = orders.filter((o) => o.status === 'Menunggu Konfirmasi').length;
   const processingOrdersCount = orders.filter((o) => o.status === 'Diproses' || o.status === 'Siap Diantar').length;
   const lowStockProducts = products.filter((p) => p.stock < 10);
+
+  /**
+   * Grafik penjualan 7 hari terakhir (dikelompokkan dari `order.createdAt`).
+   * Pesanan lama (sebelum field createdAt ditambahkan) tidak punya timestamp ISO
+   * sehingga tidak bisa dikelompokkan per tanggal secara akurat — otomatis dilewati
+   * dari grafik ini saja (tetap terhitung di kartu Total Nilai Pesanan di atas).
+   */
+  const dailySalesChartData = (() => {
+    const days: { key: string; label: string; total: number; jumlahPesanan: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      days.push({
+        key,
+        label: d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }),
+        total: 0,
+        jumlahPesanan: 0,
+      });
+    }
+    const byKey = new Map(days.map((d) => [d.key, d]));
+    orders.forEach((o) => {
+      if (!o.createdAt) return;
+      const key = o.createdAt.slice(0, 10);
+      const bucket = byKey.get(key);
+      if (bucket) {
+        bucket.total += o.totalAmount;
+        bucket.jumlahPesanan += 1;
+      }
+    });
+    return days;
+  })();
+
+  /** Grafik pemasukan (stok masuk/restock) vs pengeluaran (stok keluar/terjual) 7 hari terakhir. */
+  const stockMovementChartData = (() => {
+    const days: { key: string; label: string; masuk: number; keluar: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      days.push({
+        key,
+        label: d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }),
+        masuk: 0,
+        keluar: 0,
+      });
+    }
+    const byKey = new Map(days.map((d) => [d.key, d]));
+    stockMovements.forEach((m) => {
+      const key = m.createdAt.slice(0, 10);
+      const bucket = byKey.get(key);
+      if (bucket) {
+        if (m.type === 'masuk') bucket.masuk += m.qty;
+        else bucket.keluar += m.qty;
+      }
+    });
+    return days;
+  })();
 
   // ---------------- EXPORT HANDLERS (CSV, PDF, JSON) ----------------
   const handleExportOrdersCSV = () => {
@@ -1320,6 +1385,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
 
     if (editingProductId) {
+      // Ambil stok lama SEBELUM diperbarui, supaya kalau admin mengubah angka stok
+      // langsung lewat form edit (bukan tombol +10), perubahannya tetap tercatat
+      // di riwayat pergerakan stok (masuk/keluar) untuk grafik dashboard.
+      const productBeforeEdit = products.find((p) => p.id === editingProductId);
+      const stockDiff = productBeforeEdit ? Number(prodStock) - productBeforeEdit.stock : 0;
+
       db.updateProduct(editingProductId, {
         name: prodName,
         category: prodCategory,
@@ -1333,9 +1404,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         isBestSeller: prodIsBestSeller,
         badge: prodBadge || undefined,
       });
+
+      if (stockDiff !== 0) {
+        db.logStockMovement({
+          productId: editingProductId,
+          productName: prodName,
+          unit: prodUnit,
+          type: stockDiff > 0 ? 'masuk' : 'keluar',
+          qty: Math.abs(stockDiff),
+          note: 'Penyesuaian stok manual lewat form edit produk',
+        });
+      }
+
       showToast(`Produk "${prodName}" berhasil diperbarui!`);
     } else {
-      db.addProduct({
+      const newProduct = db.addProduct({
         name: prodName,
         category: prodCategory,
         price: Number(prodPrice),
@@ -1348,6 +1431,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         isBestSeller: prodIsBestSeller,
         badge: prodBadge || undefined,
       });
+      if (Number(prodStock) > 0) {
+        db.logStockMovement({
+          productId: newProduct.id,
+          productName: prodName,
+          unit: prodUnit,
+          type: 'masuk',
+          qty: Number(prodStock),
+          note: 'Stok awal produk baru',
+        });
+      }
       showToast(`Produk baru "${prodName}" berhasil ditambahkan ke katalog toko!`);
     }
 
@@ -1362,8 +1455,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   };
 
   const handleQuickAdjustStock = (prod: Product, delta: number) => {
+    db.adjustStock(prod.id, delta, delta > 0 ? 'Restock cepat oleh admin' : 'Pengurangan stok cepat oleh admin');
     const newStock = Math.max(0, prod.stock + delta);
-    db.updateProduct(prod.id, { stock: newStock });
     showToast(`Stok "${prod.name}" disesuaikan ke ${newStock} ${prod.unit}.`);
   };
 
@@ -1765,6 +1858,71 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
               <div className="text-2xl font-black text-rose-600">{lowStockProducts.length} Produk</div>
               <p className="text-[11px] text-neutral-500">Sisa stok kurang dari 10 unit</p>
+            </div>
+          </div>
+
+          {/* Grafik Penjualan Harian & Grafik Stok Masuk/Keluar */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-3xl p-6 border border-neutral-200 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                <TrendingUp className="w-5 h-5 text-emerald-700" />
+                <h3 className="font-bold text-base text-neutral-900">Grafik Penjualan 7 Hari Terakhir</h3>
+              </div>
+              {dailySalesChartData.every((d) => d.jumlahPesanan === 0) ? (
+                <p className="text-xs text-neutral-500 text-center py-10">Belum ada data penjualan pada rentang 7 hari terakhir.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <LineChart data={dailySalesChartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                    <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="#a3a3a3" />
+                    <YAxis
+                      tick={{ fontSize: 10 }}
+                      stroke="#a3a3a3"
+                      tickFormatter={(v: number) => (v >= 1000000 ? `${(v / 1000000).toFixed(1)}jt` : v >= 1000 ? `${Math.round(v / 1000)}rb` : String(v))}
+                      width={40}
+                    />
+                    <Tooltip
+                      formatter={(value, name) =>
+                        name === 'total' ? [formatRupiah(Number(value)), 'Total Penjualan'] : [String(value), 'Jumlah Pesanan']
+                      }
+                      labelStyle={{ fontWeight: 700, fontSize: 12 }}
+                      contentStyle={{ fontSize: 12, borderRadius: 12, border: '1px solid #e5e5e5' }}
+                    />
+                    <Line type="monotone" dataKey="total" stroke="#047857" strokeWidth={2.5} dot={{ r: 3 }} name="total" />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
+              <p className="text-[11px] text-neutral-400 text-center">Menampilkan total nilai penjualan per hari (7 hari terakhir).</p>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 border border-neutral-200 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 border-b border-neutral-100 pb-3">
+                <Package className="w-5 h-5 text-blue-700" />
+                <h3 className="font-bold text-base text-neutral-900">Grafik Stok: Pemasukan vs Pengeluaran</h3>
+              </div>
+              {stockMovementChartData.every((d) => d.masuk === 0 && d.keluar === 0) ? (
+                <p className="text-xs text-neutral-500 text-center py-10">Belum ada pergerakan stok pada rentang 7 hari terakhir.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={stockMovementChartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                    <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="#a3a3a3" />
+                    <YAxis tick={{ fontSize: 10 }} stroke="#a3a3a3" width={30} />
+                    <Tooltip
+                      formatter={(value, name) => [String(value), name === 'masuk' ? 'Stok Masuk' : 'Stok Keluar']}
+                      labelStyle={{ fontWeight: 700, fontSize: 12 }}
+                      contentStyle={{ fontSize: 12, borderRadius: 12, border: '1px solid #e5e5e5' }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: 11 }}
+                      formatter={(value: string) => (value === 'masuk' ? 'Stok Masuk' : 'Stok Keluar')}
+                    />
+                    <Bar dataKey="masuk" fill="#059669" radius={[4, 4, 0, 0]} name="masuk" />
+                    <Bar dataKey="keluar" fill="#e11d48" radius={[4, 4, 0, 0]} name="keluar" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+              <p className="text-[11px] text-neutral-400 text-center">Stok masuk = restock admin. Stok keluar = terjual otomatis + penyesuaian manual.</p>
             </div>
           </div>
 

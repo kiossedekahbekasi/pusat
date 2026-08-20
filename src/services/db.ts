@@ -1,4 +1,4 @@
-import { Product, StoreInfo, SiteSettings, CustomPhoto, AdminUser, OrderDetails, TahfidzProfile, Santri, KegiatanSantri, Guru, CustomPage, KiosSedekahProfile, NavItemConfig } from '../types';
+import { Product, StoreInfo, SiteSettings, CustomPhoto, AdminUser, OrderDetails, TahfidzProfile, Santri, KegiatanSantri, Guru, CustomPage, KiosSedekahProfile, NavItemConfig, CartItem, StockMovement } from '../types';
 import { INITIAL_PRODUCTS, STORE_INFO } from '../data/storeData';
 import { DEFAULT_TAHFIDZ_PROFILE, DEFAULT_SANTRI_LIST, DEFAULT_KEGIATAN_LIST, DEFAULT_GURU_LIST } from '../data/tahfidzData';
 import { DEFAULT_KIOS_SEDEKAH_PROFILE } from '../data/kiosSedekahData';
@@ -19,7 +19,12 @@ const KEYS = {
   KEGIATAN: 'tsbu_db_kegiatan_v1',
   CUSTOM_PAGES: 'tsbu_db_custom_pages_v1',
   KIOS_SEDEKAH: 'tsbu_db_kios_sedekah_v1',
+  STOCK_MOVEMENTS: 'tsbu_db_stock_movements_v1',
 };
+
+/** Riwayat pergerakan stok disimpan maksimal ini banyaknya (yang terbaru),
+ *  supaya localStorage/Firestore tidak membengkak tanpa batas seiring waktu. */
+const MAX_STOCK_MOVEMENTS = 500;
 
 /**
  * Status sinkronisasi cloud terakhir.
@@ -351,7 +356,7 @@ if (typeof window !== 'undefined') {
 
 // Setup automatic real-time listener from Firestore
 if (typeof window !== 'undefined') {
-  const collectionsToSync = ['products', 'storeInfo', 'settings', 'photos', 'orders', 'tahfidzProfile', 'santri', 'guru', 'kegiatan', 'customPages', 'kiosSedekah'];
+  const collectionsToSync = ['products', 'storeInfo', 'settings', 'photos', 'orders', 'tahfidzProfile', 'santri', 'guru', 'kegiatan', 'customPages', 'kiosSedekah', 'stockMovements'];
   collectionsToSync.forEach((key) => {
     try {
       const docRef = doc(firestore, 'store_data', key);
@@ -375,6 +380,7 @@ if (typeof window !== 'undefined') {
                 kegiatan: KEYS.KEGIATAN,
                 customPages: KEYS.CUSTOM_PAGES,
                 kiosSedekah: KEYS.KIOS_SEDEKAH,
+                stockMovements: KEYS.STOCK_MOVEMENTS,
               };
               const storageKey = localKeyMap[key];
               if (storageKey) {
@@ -458,6 +464,96 @@ export const db = {
     const products = this.getProducts();
     const updated = products.filter((p) => p.id !== id);
     this.saveProducts(updated);
+  },
+
+  // STOCK MOVEMENTS (riwayat pemasukan & pengeluaran stok)
+  getStockMovements(): StockMovement[] {
+    try {
+      const data = localStorage.getItem(KEYS.STOCK_MOVEMENTS);
+      if (!data) return [];
+      return JSON.parse(data);
+    } catch {
+      return [];
+    }
+  },
+
+  saveStockMovements(movements: StockMovement[]): void {
+    persist(KEYS.STOCK_MOVEMENTS, 'stockMovements', movements);
+  },
+
+  /** Mencatat satu baris riwayat pergerakan stok tanpa mengubah angka stok produk
+   *  (dipakai saat stok sudah diubah lewat updateProduct/addProduct terpisah). */
+  logStockMovement(entry: Omit<StockMovement, 'id' | 'createdAt'> & { createdAt?: string }): void {
+    const movements = this.getStockMovements();
+    const newEntry: StockMovement = {
+      ...entry,
+      id: `mv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      createdAt: entry.createdAt || new Date().toISOString(),
+    };
+    const updated = [newEntry, ...movements].slice(0, MAX_STOCK_MOVEMENTS);
+    this.saveStockMovements(updated);
+  },
+
+  /**
+   * Menyesuaikan stok satu produk sebesar `delta` (boleh positif = tambah stok/pemasukan,
+   * atau negatif = kurangi stok/pengeluaran), lalu otomatis mencatatnya ke riwayat
+   * pergerakan stok. Dipakai oleh tombol "+10 Stok" cepat dan penyesuaian stok manual admin.
+   */
+  adjustStock(productId: string, delta: number, note: string): void {
+    if (delta === 0) return;
+    const products = this.getProducts();
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
+    const newStock = Math.max(0, product.stock + delta);
+    const actualDelta = newStock - product.stock;
+    this.updateProduct(productId, { stock: newStock });
+    if (actualDelta === 0) return;
+    this.logStockMovement({
+      productId: product.id,
+      productName: product.name,
+      unit: product.unit,
+      type: actualDelta > 0 ? 'masuk' : 'keluar',
+      qty: Math.abs(actualDelta),
+      note,
+    });
+  },
+
+  /**
+   * Dipanggil otomatis setiap ada pesanan baru yang berhasil dibuat (checkout selesai):
+   * mengurangi stok gudang tiap produk sesuai jumlah yang dibeli, dan mencatatnya sebagai
+   * pengeluaran stok ("keluar") supaya muncul di grafik pemasukan/pengeluaran stok admin.
+   * Stok tidak pernah dibiarkan minus — kalau jumlah pesanan melebihi sisa stok tercatat,
+   * stok hanya dikurangi sampai 0 (data stok mungkin sudah tidak sinkron sebelumnya).
+   */
+  recordSale(items: CartItem[], orderId: string): void {
+    let products = this.getProducts();
+    const movements: StockMovement[] = [];
+
+    items.forEach((item) => {
+      const product = products.find((p) => p.id === item.product.id);
+      if (!product) return;
+      const newStock = Math.max(0, product.stock - item.quantity);
+      const actualQtyOut = product.stock - newStock;
+      products = products.map((p) => (p.id === product.id ? { ...p, stock: newStock } : p));
+      if (actualQtyOut > 0) {
+        movements.push({
+          id: `mv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}_${product.id}`,
+          productId: product.id,
+          productName: product.name,
+          unit: product.unit,
+          type: 'keluar',
+          qty: actualQtyOut,
+          note: `Penjualan otomatis — pesanan ${orderId}`,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    });
+
+    this.saveProducts(products);
+    if (movements.length > 0) {
+      const existing = this.getStockMovements();
+      this.saveStockMovements([...movements, ...existing].slice(0, MAX_STOCK_MOVEMENTS));
+    }
   },
 
   // STORE INFO
