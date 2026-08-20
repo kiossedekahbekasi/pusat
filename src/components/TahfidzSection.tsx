@@ -1,26 +1,30 @@
 import React, { useState } from 'react';
-import { TahfidzProfile, Santri, KegiatanSantri } from '../types';
-import { BookOpen, Award, Calendar, MapPin, Phone, MessageSquare, Search, Filter, Sparkles, GraduationCap, X, ChevronRight, User, Play } from 'lucide-react';
+import { TahfidzProfile, Santri, KegiatanSantri, Guru } from '../types';
+import { BookOpen, Award, Calendar, MapPin, Phone, MessageSquare, Search, Filter, Sparkles, GraduationCap, X, ChevronRight, User, Play, Users } from 'lucide-react';
 import { PrayerTimesWidget } from './PrayerTimesWidget';
 
 interface TahfidzSectionProps {
   tahfidzProfile: TahfidzProfile;
   santriList: Santri[];
+  guruList: Guru[];
   kegiatanList: KegiatanSantri[];
 }
 
 export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
   tahfidzProfile,
   santriList,
+  guruList,
   kegiatanList,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'santri' | 'kegiatan'>('profile');
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'santri' | 'guru' | 'kegiatan'>('profile');
   const [santriSearch, setSantriSearch] = useState('');
   const [santriStatusFilter, setSantriStatusFilter] = useState<'all' | 'Aktif' | 'Mutqin' | 'Lulus'>('all');
+  const [guruSearch, setGuruSearch] = useState('');
   const [kegiatanCategoryFilter, setKegiatanCategoryFilter] = useState<string>('all');
   const [logoFailed, setLogoFailed] = useState(false);
   const [selectedPhotoModal, setSelectedPhotoModal] = useState<KegiatanSantri | null>(null);
   const [selectedSantriModal, setSelectedSantriModal] = useState<Santri | null>(null);
+  const [selectedGuruModal, setSelectedGuruModal] = useState<Guru | null>(null);
 
   // Filtered Santri
   const filteredSantri = santriList.filter((s) => {
@@ -29,6 +33,12 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
                           s.wali.toLowerCase().includes(santriSearch.toLowerCase());
     const matchesStatus = santriStatusFilter === 'all' || s.status === santriStatusFilter;
     return matchesSearch && matchesStatus;
+  });
+
+  // Filtered Guru
+  const filteredGuru = guruList.filter((g) => {
+    return g.name.toLowerCase().includes(guruSearch.toLowerCase()) ||
+           g.jabatan.toLowerCase().includes(guruSearch.toLowerCase());
   });
 
   // Filtered Kegiatan
@@ -40,6 +50,7 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
   const totalSantriAktif = santriList.filter(s => s.status === 'Aktif').length;
   const totalMutqin = santriList.filter(s => s.status === 'Mutqin' || s.hafalanJuz === 30).length;
   const totalLulus = santriList.filter(s => s.status === 'Lulus').length;
+  const totalGuruAktif = guruList.filter(g => g.status === 'Aktif').length;
 
   return (
     <section className="py-8 px-4 sm:px-6 max-w-7xl mx-auto space-y-8 animate-fadeIn">
@@ -98,7 +109,7 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="mt-8 pt-6 border-t border-emerald-700/50 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+        <div className="mt-8 pt-6 border-t border-emerald-700/50 grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
           <div className="bg-emerald-950/40 backdrop-blur-xs p-3 rounded-2xl border border-emerald-700/40">
             <p className="text-2xl font-black text-amber-300">{totalSantriAktif}</p>
             <p className="text-[11px] text-emerald-200 uppercase tracking-wider font-medium">Santri Aktif</p>
@@ -110,6 +121,10 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
           <div className="bg-emerald-950/40 backdrop-blur-xs p-3 rounded-2xl border border-emerald-700/40">
             <p className="text-2xl font-black text-amber-300">{totalLulus}</p>
             <p className="text-[11px] text-emerald-200 uppercase tracking-wider font-medium">Alumni Lulus</p>
+          </div>
+          <div className="bg-emerald-950/40 backdrop-blur-xs p-3 rounded-2xl border border-emerald-700/40">
+            <p className="text-2xl font-black text-amber-300">{totalGuruAktif}</p>
+            <p className="text-[11px] text-emerald-200 uppercase tracking-wider font-medium">Guru / Pengajar</p>
           </div>
           <div className="bg-emerald-950/40 backdrop-blur-xs p-3 rounded-2xl border border-emerald-700/40">
             <p className="text-2xl font-black text-amber-300">{kegiatanList.length}</p>
@@ -142,6 +157,18 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
         >
           <GraduationCap className="w-4 h-4" />
           <span>Data Santri ({santriList.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('guru')}
+          className={`px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            activeSubTab === 'guru'
+              ? 'bg-emerald-800 text-white shadow-md'
+              : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Data Guru ({guruList.length})</span>
         </button>
 
         <button
@@ -387,6 +414,98 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
         </div>
       )}
 
+      {/* SUB TAB 2b: DATA GURU */}
+      {activeSubTab === 'guru' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Search Bar */}
+          <div className="bg-white rounded-3xl p-4 border border-neutral-200 shadow-xs flex flex-col sm:flex-row gap-3 items-center">
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={guruSearch}
+                onChange={(e) => setGuruSearch(e.target.value)}
+                placeholder="Cari nama guru atau jabatan..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400"
+              />
+            </div>
+          </div>
+
+          {/* Guru Cards Grid */}
+          {filteredGuru.length === 0 ? (
+            <div className="bg-white rounded-3xl p-12 text-center border border-neutral-200 space-y-3">
+              <Users className="w-12 h-12 mx-auto text-neutral-300" />
+              <p className="text-sm font-bold text-neutral-700">Data Guru Tidak Ditemukan</p>
+              <p className="text-xs text-neutral-400">Coba ubah kata kunci pencarian.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredGuru.map((guru) => (
+                <div
+                  key={guru.id}
+                  className="bg-white rounded-3xl p-5 border border-neutral-200 shadow-xs hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between space-y-4 group"
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Guru Avatar */}
+                    <div
+                      className="relative shrink-0 cursor-pointer"
+                      onClick={() => setSelectedGuruModal(guru)}
+                    >
+                      <img
+                        src={guru.photoUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=400'}
+                        alt={guru.name}
+                        className="w-16 h-16 rounded-2xl object-cover border border-neutral-200 shadow-xs group-hover:scale-105 transition-transform"
+                      />
+                      <span className={`absolute -bottom-1 -right-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md text-white ${
+                        guru.status === 'Aktif' ? 'bg-emerald-600' : 'bg-neutral-500'
+                      }`}>
+                        {guru.status}
+                      </span>
+                    </div>
+
+                    {/* Guru Main Info */}
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <p className="text-[10px] uppercase font-bold text-amber-700 tracking-wider line-clamp-1">{guru.jabatan}</p>
+                      <h4 className="font-bold text-neutral-900 text-sm line-clamp-1 group-hover:text-emerald-800 transition-colors">
+                        {guru.name}
+                      </h4>
+                      <p className="text-xs text-neutral-500 flex items-center gap-1">
+                        <span>{guru.gender === 'L' ? 'Ustadz' : 'Ustadzah'}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Spesialisasi Badge */}
+                  {guru.spesialisasi && (
+                    <div className="bg-emerald-50/80 rounded-2xl p-3 border border-emerald-100">
+                      <p className="text-[10px] uppercase font-bold text-emerald-800">Spesialisasi</p>
+                      <p className="text-xs font-semibold text-emerald-950 line-clamp-2">
+                        {guru.spesialisasi}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Additional details */}
+                  <div className="text-[11px] text-neutral-600 space-y-1 pt-1 border-t border-neutral-100">
+                    {guru.phone && (
+                      <p className="flex justify-between">
+                        <span className="text-neutral-400">No. HP / WA:</span>
+                        <strong className="text-neutral-800">{guru.phone}</strong>
+                      </p>
+                    )}
+                    {guru.bio && (
+                      <p className="text-neutral-500 italic line-clamp-2 text-[10px] pt-1">
+                        "{guru.bio}"
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* SUB TAB 3: KEGIATAN SANTRI */}
       {activeSubTab === 'kegiatan' && (
         <div className="space-y-6 animate-fadeIn">
@@ -592,6 +711,67 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
                 </p>
                 {selectedSantriModal.notes && (
                   <p className="text-neutral-500 italic pt-1">"{selectedSantriModal.notes}"</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL FOTO GURU RESOLUSI PENUH */}
+      {selectedGuruModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setSelectedGuruModal(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative bg-black aspect-square flex items-center justify-center">
+              <img
+                src={selectedGuruModal.photoUrl || 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=400'}
+                alt={selectedGuruModal.name}
+                className="w-full h-full object-cover"
+              />
+              <button
+                onClick={() => setSelectedGuruModal(null)}
+                className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 backdrop-blur-md cursor-pointer transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <span className={`absolute bottom-4 right-4 text-[11px] font-extrabold px-2.5 py-1 rounded-lg text-white ${
+                selectedGuruModal.status === 'Aktif' ? 'bg-emerald-600' : 'bg-neutral-500'
+              }`}>
+                {selectedGuruModal.status}
+              </span>
+            </div>
+
+            <div className="px-6 pb-6 space-y-3">
+              <div>
+                <p className="text-[10px] uppercase font-bold text-amber-700 tracking-wider">{selectedGuruModal.jabatan}</p>
+                <h3 className="text-xl font-bold text-neutral-900">{selectedGuruModal.name}</h3>
+                <p className="text-xs text-neutral-500">
+                  {selectedGuruModal.gender === 'L' ? 'Ustadz' : 'Ustadzah'}
+                </p>
+              </div>
+
+              {selectedGuruModal.spesialisasi && (
+                <div className="bg-emerald-50/80 rounded-2xl p-3 border border-emerald-100">
+                  <p className="text-[10px] uppercase font-bold text-emerald-800">Spesialisasi</p>
+                  <p className="text-sm font-extrabold text-emerald-950">{selectedGuruModal.spesialisasi}</p>
+                </div>
+              )}
+
+              <div className="text-[11px] text-neutral-600 space-y-1 pt-1 border-t border-neutral-100">
+                {selectedGuruModal.phone && (
+                  <p className="flex justify-between">
+                    <span className="text-neutral-400">No. HP / WA:</span>
+                    <strong className="text-neutral-800">{selectedGuruModal.phone}</strong>
+                  </p>
+                )}
+                {selectedGuruModal.bio && (
+                  <p className="text-neutral-500 italic pt-1">"{selectedGuruModal.bio}"</p>
                 )}
               </div>
             </div>

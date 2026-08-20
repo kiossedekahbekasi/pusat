@@ -1,4 +1,4 @@
-import { TahfidzProfile, Santri, KegiatanSantri } from '../types';
+import { TahfidzProfile, Santri, KegiatanSantri, Guru } from '../types';
 
 export const DEFAULT_TAHFIDZ_PROFILE: TahfidzProfile = {
   name: "Rumah Tahfidz Nurul A'laa Al-Qur'an",
@@ -90,6 +90,45 @@ export const DEFAULT_SANTRI_LIST: Santri[] = [
     photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400',
     joinedDate: '2021-02-10',
     notes: 'Alumni lulusan 2025, saat ini menjadi asisten pengajar tahfidz.'
+  }
+];
+
+export const DEFAULT_GURU_LIST: Guru[] = [
+  {
+    id: 'gr-001',
+    name: 'Ustadz H. Ahmad Fauzi Al-Hafiz, Lc.',
+    gender: 'L',
+    jabatan: 'Pengasuh / Pimpinan',
+    spesialisasi: "Hafal 30 Juz, Sanad Qira'at Ashim",
+    phone: '081298765432',
+    photoUrl: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=400',
+    status: 'Aktif',
+    joinedDate: '2018-01-01',
+    bio: 'Pendiri dan pengasuh Rumah Tahfidz, membina santri dalam hafalan dan adab Al-Qur\'an sejak tahun 2018.'
+  },
+  {
+    id: 'gr-002',
+    name: 'Ustadzah Siti Maryam, S.Pd.I.',
+    gender: 'P',
+    jabatan: 'Pengajar Tahfidz Putri',
+    spesialisasi: 'Hafal 30 Juz, Tahsin & Tajwid',
+    phone: '081345678901',
+    photoUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=400',
+    status: 'Aktif',
+    joinedDate: '2019-06-15',
+    bio: 'Membimbing santriwati dalam program tahfidz dan tahsin harian.'
+  },
+  {
+    id: 'gr-003',
+    name: 'Ustadz Zainal Abidin',
+    gender: 'L',
+    jabatan: 'Pengajar Tahsin & Tajwid',
+    spesialisasi: "Qira'at Syatibiyyah",
+    phone: '085612345678',
+    photoUrl: 'https://images.unsplash.com/photo-1590086782957-93c06ef21604?auto=format&fit=crop&q=80&w=400',
+    status: 'Aktif',
+    joinedDate: '2021-03-10',
+    bio: 'Fokus mengajarkan kelancaran bacaan dan kaidah tajwid kepada santri baru.'
   }
 ];
 

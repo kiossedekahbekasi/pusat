@@ -229,6 +229,19 @@ export interface Santri {
   notes?: string;
 }
 
+export interface Guru {
+  id: string;
+  name: string;
+  gender: 'L' | 'P';
+  jabatan: string; // e.g. "Pengasuh / Pimpinan", "Pengajar Tahfidz", "Pengajar Tahsin"
+  spesialisasi?: string; // e.g. "Hafal 30 Juz, Sanad Qira'at Ashim"
+  phone?: string;
+  photoUrl: string;
+  status: 'Aktif' | 'Non-Aktif';
+  joinedDate: string;
+  bio?: string;
+}
+
 export interface CustomPage {
   id: string;
   title: string;

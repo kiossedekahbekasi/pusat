@@ -1,6 +1,6 @@
-import { Product, StoreInfo, SiteSettings, CustomPhoto, AdminUser, OrderDetails, TahfidzProfile, Santri, KegiatanSantri, CustomPage, KiosSedekahProfile, NavItemConfig } from '../types';
+import { Product, StoreInfo, SiteSettings, CustomPhoto, AdminUser, OrderDetails, TahfidzProfile, Santri, KegiatanSantri, Guru, CustomPage, KiosSedekahProfile, NavItemConfig } from '../types';
 import { INITIAL_PRODUCTS, STORE_INFO } from '../data/storeData';
-import { DEFAULT_TAHFIDZ_PROFILE, DEFAULT_SANTRI_LIST, DEFAULT_KEGIATAN_LIST } from '../data/tahfidzData';
+import { DEFAULT_TAHFIDZ_PROFILE, DEFAULT_SANTRI_LIST, DEFAULT_KEGIATAN_LIST, DEFAULT_GURU_LIST } from '../data/tahfidzData';
 import { DEFAULT_KIOS_SEDEKAH_PROFILE } from '../data/kiosSedekahData';
 import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
@@ -15,6 +15,7 @@ const KEYS = {
   ORDERS: 'tsbu_db_orders_v1',
   TAHFIDZ_PROFILE: 'tsbu_db_tahfidz_profile_v1',
   SANTRI: 'tsbu_db_santri_v1',
+  GURU: 'tsbu_db_guru_v1',
   KEGIATAN: 'tsbu_db_kegiatan_v1',
   CUSTOM_PAGES: 'tsbu_db_custom_pages_v1',
   KIOS_SEDEKAH: 'tsbu_db_kios_sedekah_v1',
@@ -151,6 +152,7 @@ if (typeof window !== 'undefined') {
     seedFirestoreIfMissing('orders', DEFAULT_ORDERS, KEYS.ORDERS);
     seedFirestoreIfMissing('tahfidzProfile', DEFAULT_TAHFIDZ_PROFILE, KEYS.TAHFIDZ_PROFILE);
     seedFirestoreIfMissing('santri', DEFAULT_SANTRI_LIST, KEYS.SANTRI);
+    seedFirestoreIfMissing('guru', DEFAULT_GURU_LIST, KEYS.GURU);
     seedFirestoreIfMissing('kegiatan', DEFAULT_KEGIATAN_LIST, KEYS.KEGIATAN);
     seedFirestoreIfMissing('customPages', [], KEYS.CUSTOM_PAGES);
     seedFirestoreIfMissing('kiosSedekah', DEFAULT_KIOS_SEDEKAH_PROFILE, KEYS.KIOS_SEDEKAH);
@@ -349,7 +351,7 @@ if (typeof window !== 'undefined') {
 
 // Setup automatic real-time listener from Firestore
 if (typeof window !== 'undefined') {
-  const collectionsToSync = ['products', 'storeInfo', 'settings', 'photos', 'orders', 'tahfidzProfile', 'santri', 'kegiatan', 'customPages', 'kiosSedekah'];
+  const collectionsToSync = ['products', 'storeInfo', 'settings', 'photos', 'orders', 'tahfidzProfile', 'santri', 'guru', 'kegiatan', 'customPages', 'kiosSedekah'];
   collectionsToSync.forEach((key) => {
     try {
       const docRef = doc(firestore, 'store_data', key);
@@ -369,6 +371,7 @@ if (typeof window !== 'undefined') {
                 orders: KEYS.ORDERS,
                 tahfidzProfile: KEYS.TAHFIDZ_PROFILE,
                 santri: KEYS.SANTRI,
+                guru: KEYS.GURU,
                 kegiatan: KEYS.KEGIATAN,
                 customPages: KEYS.CUSTOM_PAGES,
                 kiosSedekah: KEYS.KIOS_SEDEKAH,
@@ -715,6 +718,48 @@ export const db = {
     this.saveSantriList(updated);
   },
 
+  // GURU / PENGAJAR
+  getGuruList(): Guru[] {
+    try {
+      const data = localStorage.getItem(KEYS.GURU);
+      if (!data) {
+        // Lihat catatan di getProducts() — jangan push default ke Firestore di sini.
+        localStorage.setItem(KEYS.GURU, JSON.stringify(DEFAULT_GURU_LIST));
+        return DEFAULT_GURU_LIST;
+      }
+      return JSON.parse(data);
+    } catch {
+      return DEFAULT_GURU_LIST;
+    }
+  },
+
+  saveGuruList(list: Guru[]): void {
+    persist(KEYS.GURU, 'guru', list);
+  },
+
+  addGuru(item: Omit<Guru, 'id'>): Guru {
+    const list = this.getGuruList();
+    const newItem: Guru = {
+      ...item,
+      id: `gr-${Date.now()}`,
+    };
+    const updated = [newItem, ...list];
+    this.saveGuruList(updated);
+    return newItem;
+  },
+
+  updateGuru(item: Guru): void {
+    const list = this.getGuruList();
+    const updated = list.map((g) => (g.id === item.id ? item : g));
+    this.saveGuruList(updated);
+  },
+
+  deleteGuru(id: string): void {
+    const list = this.getGuruList();
+    const updated = list.filter((g) => g.id !== id);
+    this.saveGuruList(updated);
+  },
+
   // KEGIATAN SANTRI
   getKegiatanList(): KegiatanSantri[] {
     try {
@@ -830,6 +875,7 @@ export const db = {
     persist(KEYS.ORDERS, 'orders', DEFAULT_ORDERS);
     persist(KEYS.TAHFIDZ_PROFILE, 'tahfidzProfile', DEFAULT_TAHFIDZ_PROFILE);
     persist(KEYS.SANTRI, 'santri', DEFAULT_SANTRI_LIST);
+    persist(KEYS.GURU, 'guru', DEFAULT_GURU_LIST);
     persist(KEYS.KEGIATAN, 'kegiatan', DEFAULT_KEGIATAN_LIST);
     persist(KEYS.CUSTOM_PAGES, 'customPages', []);
     persist(KEYS.KIOS_SEDEKAH, 'kiosSedekah', DEFAULT_KIOS_SEDEKAH_PROFILE);

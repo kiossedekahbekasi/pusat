@@ -15,7 +15,7 @@ import { AIUstadzSection } from './components/AIUstadzSection';
 
 import { db } from './services/db';
 import { applyGlobalTheme } from './utils/theme';
-import { Product, CartItem, OrderDetails, StoreInfo, SiteSettings, CustomPhoto, AdminUser, TahfidzProfile, Santri, KegiatanSantri, CustomPage, KiosSedekahProfile } from './types';
+import { Product, CartItem, OrderDetails, StoreInfo, SiteSettings, CustomPhoto, AdminUser, TahfidzProfile, Santri, KegiatanSantri, Guru, CustomPage, KiosSedekahProfile } from './types';
 import { SlidersHorizontal, Tag, Info } from 'lucide-react';
 
 // Panel Admin adalah komponen terbesar dan hanya dibutuhkan pengurus toko,
@@ -41,6 +41,7 @@ export default function App() {
   const [adminUser, setAdminUser] = useState<AdminUser | null>(() => db.getAdminUser());
   const [tahfidzProfile, setTahfidzProfile] = useState<TahfidzProfile>(() => db.getTahfidzProfile());
   const [santriList, setSantriList] = useState<Santri[]>(() => db.getSantriList());
+  const [guruList, setGuruList] = useState<Guru[]>(() => db.getGuruList());
   const [kegiatanList, setKegiatanList] = useState<KegiatanSantri[]>(() => db.getKegiatanList());
   const [customPages, setCustomPages] = useState<CustomPage[]>(() => db.getCustomPages());
   const [kiosSedekahProfile, setKiosSedekahProfile] = useState<KiosSedekahProfile>(() => db.getKiosSedekahProfile());
@@ -85,6 +86,7 @@ export default function App() {
       const updatedAdminUser = db.getAdminUser();
       const updatedTahfidzProfile = db.getTahfidzProfile();
       const updatedSantri = db.getSantriList();
+      const updatedGuru = db.getGuruList();
       const updatedKegiatan = db.getKegiatanList();
       const updatedCustomPages = db.getCustomPages();
       const updatedKiosSedekahProfile = db.getKiosSedekahProfile();
@@ -96,6 +98,7 @@ export default function App() {
       setAdminUser(updatedAdminUser);
       setTahfidzProfile(updatedTahfidzProfile);
       setSantriList(updatedSantri);
+      setGuruList(updatedGuru);
       setKegiatanList(updatedKegiatan);
       setCustomPages(updatedCustomPages);
       setKiosSedekahProfile(updatedKiosSedekahProfile);
@@ -365,6 +368,7 @@ export default function App() {
             <TahfidzSection
               tahfidzProfile={tahfidzProfile}
               santriList={santriList}
+              guruList={guruList}
               kegiatanList={kegiatanList}
             />
           )}
