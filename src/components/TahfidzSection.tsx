@@ -609,15 +609,17 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
         </div>
       )}
 
-      {/* MODAL FOTO RESOLUSI PENUH */}
+      {/* MODAL FOTO/VIDEO RESOLUSI PENUH */}
       {selectedPhotoModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl space-y-4">
-            <div className="relative bg-black aspect-square flex items-center justify-center">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-hidden shadow-2xl flex flex-col">
+            {/* Kontainer media: tinggi menyesuaikan rasio asli foto/video (bukan dipaksa kotak),
+                supaya tidak ada bar hitam berlebih dan langsung terlihat penuh tanpa perlu scroll. */}
+            <div className="relative bg-black flex items-center justify-center shrink-0">
               {selectedPhotoModal.videoUrl ? (
                 <video
                   src={selectedPhotoModal.videoUrl}
-                  className="w-full h-full object-contain"
+                  className="w-full max-h-[60vh] sm:max-h-[65vh] object-contain"
                   controls
                   autoPlay
                   playsInline
@@ -626,18 +628,19 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
                 <img
                   src={selectedPhotoModal.photoUrl}
                   alt={selectedPhotoModal.title}
-                  className="w-full h-full object-contain"
+                  className="w-full max-h-[60vh] sm:max-h-[65vh] object-contain"
                 />
               )}
               <button
                 onClick={() => setSelectedPhotoModal(null)}
+                aria-label="Tutup"
                 className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 backdrop-blur-md cursor-pointer transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-2">
+            <div className="p-6 space-y-2 overflow-y-auto">
               <span className="inline-block px-2.5 py-0.5 bg-emerald-100 text-emerald-900 text-[11px] font-bold rounded-lg uppercase">
                 {selectedPhotoModal.category}
               </span>
@@ -653,6 +656,7 @@ export const TahfidzSection: React.FC<TahfidzSectionProps> = ({
           </div>
         </div>
       )}
+
 
       {/* MODAL FOTO SANTRI RESOLUSI PENUH */}
       {selectedSantriModal && (
